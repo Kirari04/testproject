@@ -1,0 +1,6 @@
+.air.toml
+.git
+.gitignore
+Makefile
+tmp
+Dockerfile
