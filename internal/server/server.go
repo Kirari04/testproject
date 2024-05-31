@@ -61,6 +61,7 @@ func NewServer() *Server {
 		env:              cfg,
 		db:               db,
 	}
+
 	s.Middleware()
 	s.Routes()
 
