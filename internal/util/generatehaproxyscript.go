@@ -74,13 +74,17 @@ func GenerateProxyConfig(s t.Server) error {
 		}
 	}
 
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	// assemble config
 	cfg := defaultsCfg + frontendCfg + backendCfg + "\n"
 	wasRunning := app.Proxy.IsRunning()
 	app.Proxy.Stop()
 	// write config
 	if err := os.WriteFile("haproxy/haproxy.cfg", []byte(cfg), 0644); err != nil {
-		tx.Rollback()
 		return err
 	}
 

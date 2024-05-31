@@ -12,22 +12,14 @@ import (
 func KeepAliveProxy(s t.Server) {
 	for {
 		time.Sleep(time.Second * 5)
-		tx := s.DB().Begin()
+		tx := s.DB()
 		var setting m.Setting
 		if err := tx.First(&setting).Error; err != nil {
-			log.Error().Err(err).Msg("failed to get setting")
-			tx.Rollback()
+			log.Error().Err(err).Msg("failed to get setting inside keepalive")
 			continue
 		}
 
 		if app.Proxy.IsRunning() != setting.ShouldProxyRun {
-			// unlock settings because start and stop require to access the settings table
-			if err := tx.Commit().Error; err != nil {
-				log.Error().Err(err).Msg("failed to commit")
-				tx.Rollback()
-				continue
-			}
-
 			log.Info().
 				Bool("IsRunning", app.Proxy.IsRunning()).
 				Bool("ShouldBeRunning", setting.ShouldProxyRun).
@@ -38,13 +30,6 @@ func KeepAliveProxy(s t.Server) {
 			} else {
 				log.Info().Msg("keepalive detected proxy not running")
 				app.Proxy.Start()
-			}
-		} else {
-			// unlock settings because start and stop require to access the settings table
-			if err := tx.Commit().Error; err != nil {
-				log.Error().Err(err).Msg("failed to commit")
-				tx.Rollback()
-				continue
 			}
 		}
 	}

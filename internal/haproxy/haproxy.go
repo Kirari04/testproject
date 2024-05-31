@@ -59,14 +59,14 @@ func (h *Haproxy) Start() {
 
 	var setting m.Setting
 	if err := tx.First(&setting).Error; err != nil {
-		log.Error().Err(err).Msg("failed to get setting")
+		log.Error().Err(err).Msg("failed to get setting inside start")
 		tx.Rollback()
 		h.i.Unlock()
 		return
 	}
 	setting.ShouldProxyRun = true
 	if err := tx.Save(&setting).Error; err != nil {
-		log.Error().Err(err).Msg("failed to update setting")
+		log.Error().Err(err).Msg("failed to update setting inside start")
 		tx.Rollback()
 		h.i.Unlock()
 		return
@@ -102,14 +102,14 @@ func (h *Haproxy) Start() {
 
 			var setting m.Setting
 			if err := tx.First(&setting).Error; err != nil {
-				log.Error().Err(err).Msg("failed to get setting")
+				log.Error().Err(err).Msg("failed to get setting inside stop")
 				tx.Rollback()
 				h.i.Unlock()
 				return
 			}
 			setting.ShouldProxyRun = false
 			if err := tx.Save(&setting).Error; err != nil {
-				log.Error().Err(err).Msg("failed to update setting")
+				log.Error().Err(err).Msg("failed to update setting inside stop")
 				tx.Rollback()
 				h.i.Unlock()
 				return

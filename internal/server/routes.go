@@ -1,16 +1,11 @@
 package server
 
 import (
-	"net/http"
 	"testproject/internal/handler"
-
-	"github.com/labstack/echo/v4"
 )
 
 func (s *Server) Routes() error {
-	s.e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
+	s.e.Static("/", "./dist")
 	s.e.GET("/api/test", handler.Test)
 	s.e.GET("/api/start", handler.Start)
 	s.e.GET("/api/stop", handler.Stop)

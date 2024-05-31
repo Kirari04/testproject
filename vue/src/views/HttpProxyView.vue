@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NCard, useLoadingBar, NSpace, NInput, NInputNumber, NButton, NIcon, NTable, } from 'naive-ui'
+import { NCard, useLoadingBar, NSpace, NInput, NInputNumber, NButton, NIcon, NTable, NTag } from 'naive-ui'
 import { onMounted, ref, h } from 'vue'
 import { type Component } from 'vue'
 import {
@@ -9,6 +9,7 @@ import {
 import axios from 'axios';
 import type { Frontend } from 'env';
 import { useToast } from 'vue-toastification';
+import { useStore } from '@/stores/store';
 function renderIcon(icon: Component) {
 	return () => h(NIcon, null, { default: () => h(icon) })
 }
@@ -21,6 +22,8 @@ onMounted(async () => {
 		loadingBar.finish()
 	}, 500)
 })
+
+const store = useStore()
 
 const proxies = ref<Frontend[]>([])
 
@@ -101,6 +104,7 @@ async function runApply() {
 			console.log(err.message)
 			useToast().error('Failed to apply proxy')
 		})
+	store.checkIsProxyRunning()
 	loadingBar.finish()
 }
 </script>
@@ -132,8 +136,17 @@ async function runApply() {
 		</n-space>
 	</n-card>
 	<n-card title="Proxies">
+
 		<n-space vertical>
-			<n-button type="primary" @click="runApply()">Apply</n-button>
+			<n-space>
+				<n-tag v-if="store.isProxyRunning" type="success">
+					Proxy is running
+				</n-tag>
+				<n-tag v-if="!store.isProxyRunning" type="error">
+					Proxy is off
+				</n-tag>
+				<n-button type="primary" @click="runApply()">Apply</n-button>
+			</n-space>
 			<n-table :single-line="false">
 				<thead>
 					<tr>

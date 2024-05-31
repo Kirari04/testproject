@@ -31,7 +31,7 @@ func (s *Server) Middleware() error {
 		ContentTypeNosniff:    "nosniff",
 		XFrameOptions:         "SAMEORIGIN",
 		HSTSMaxAge:            3600,
-		ContentSecurityPolicy: "default-src 'self'",
+		ContentSecurityPolicy: "default-src 'self' style-src 'self' 'unsafe-inline';",
 	}))
 	s.e.Use(middleware.BodyLimit(s.BodyLimit))
 	s.e.Use(middleware.CORSWithConfig(middleware.CORSConfig{

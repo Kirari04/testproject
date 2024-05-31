@@ -9,11 +9,19 @@ import {
 	InfoRound,
 	WebRound,
 } from '@vicons/material'
+import { useStore } from './stores/store'
+import axios from 'axios'
 
 
 function renderIcon(icon: Component) {
 	return () => h(NIcon, null, { default: () => h(icon) })
 }
+
+const store = useStore()
+store.checkIsProxyRunning()
+setInterval(() => {
+	store.checkIsProxyRunning()
+}, 10 * 1000)
 
 const router = useRouter()
 const collapsed = ref(false)
