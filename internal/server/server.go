@@ -3,8 +3,11 @@ package server
 import (
 	"context"
 	"os"
+	"testproject/internal/app"
+	"testproject/internal/bg"
 	"testproject/internal/db"
 	"testproject/internal/env"
+	"testproject/internal/haproxy"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -60,6 +63,12 @@ func NewServer() *Server {
 	}
 	s.Middleware()
 	s.Routes()
+
+	app.Proxy = haproxy.NewHaproxy(s)
+
+	// leaking goroutines
+	go bg.KeepAliveProxy(s)
+
 	return s
 }
 
