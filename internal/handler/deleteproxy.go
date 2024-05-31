@@ -31,6 +31,7 @@ func (h *DeleteProxyHandler) Route(c echo.Context) error {
 	}
 
 	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
