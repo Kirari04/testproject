@@ -15,6 +15,7 @@ WORKDIR /app
 RUN npm install -g bun
 ENV NODE_ENV=production
 COPY vue/ .
+RUN echo "VITE_APP_API=" > .env
 RUN bun install --frozen-lockfile --production
 RUN bun run build
 
