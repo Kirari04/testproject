@@ -1,6 +1,9 @@
-import { ref, computed } from 'vue'
+import { ref, computed, defineComponent, h } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { useToast } from 'vue-toastification'
+import ToastDesc from '@/components/ToastDesc.vue'
+
 
 export const useStore = defineStore('store', () => {
   const isProxyRunning = ref(false)
@@ -14,7 +17,13 @@ export const useStore = defineStore('store', () => {
       })
       .catch(err => {
         isProxyRunning.value = false
-        console.log(err.message)
+        useToast().error(
+          h(ToastDesc, {
+            title: 'Proxy is not running',
+            message: err.message,
+          }), {
+          timeout: 5000,
+        })
       })
   }
 

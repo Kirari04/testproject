@@ -2,7 +2,7 @@
 import { h, nextTick, onMounted, ref, watch } from 'vue'
 import { type Component } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
-import { NLayout, NLayoutSider, NIcon, NMenu, NLoadingBarProvider, NFlex } from 'naive-ui'
+import { NLayout, NLayoutSider, NIcon, NMenu, NLoadingBarProvider, NFlex, NAlert, NCard } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import {
 	HomeRound,
@@ -10,7 +10,6 @@ import {
 	WebRound,
 } from '@vicons/material'
 import { useStore } from './stores/store'
-import axios from 'axios'
 
 
 function renderIcon(icon: Component) {

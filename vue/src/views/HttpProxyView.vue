@@ -10,6 +10,7 @@ import axios from 'axios';
 import type { Frontend } from 'env';
 import { useToast } from 'vue-toastification';
 import { useStore } from '@/stores/store';
+import ToastDesc from '@/components/ToastDesc.vue'
 function renderIcon(icon: Component) {
 	return () => h(NIcon, null, { default: () => h(icon) })
 }
@@ -48,12 +49,16 @@ async function createProxy() {
 		backends: backends.value.map(b => ({ address: b.addr })),
 	})
 		.then(res => {
-			console.log(res.data)
 			useToast().success('Proxy created')
 		})
 		.catch(err => {
-			console.log(err.message)
-			useToast().error('Failed to create proxy')
+			useToast().error(
+				h(ToastDesc, {
+					title: 'Failed to create proxy',
+					message: err.message,
+				}), {
+				timeout: 5000,
+			})
 		})
 	port.value = 80
 	domain.value = ''
@@ -70,12 +75,16 @@ async function deleteProxy(pr: Frontend) {
 		}
 	})
 		.then(res => {
-			console.log(res.data)
 			useToast().success('Proxy deleted')
 		})
 		.catch(err => {
-			console.log(err.message)
-			useToast().error('Failed to delete proxy')
+			useToast().error(
+				h(ToastDesc, {
+					title: 'Failed to delete proxy',
+					message: err.message,
+				}), {
+				timeout: 5000,
+			})
 		})
 
 	await getProxies()
@@ -85,11 +94,16 @@ async function deleteProxy(pr: Frontend) {
 async function getProxies() {
 	await axios.get<Frontend[]>(`${import.meta.env.VITE_APP_API}/api/proxies`)
 		.then(res => {
-			console.log(res.data)
 			proxies.value = res.data
 		})
 		.catch(err => {
-			console.log(err.message)
+			useToast().error(
+				h(ToastDesc, {
+					title: 'Failed get proxies',
+					message: err.message,
+				}), {
+				timeout: 5000,
+			})
 		})
 }
 
@@ -101,8 +115,13 @@ async function runApply() {
 			useToast().success('Proxy applied')
 		})
 		.catch(err => {
-			console.log(err.message)
-			useToast().error('Failed to apply proxy')
+			useToast().error(
+				h(ToastDesc, {
+					title: 'Failed to apply proxy',
+					message: err.message,
+				}), {
+				timeout: 5000,
+			})
 		})
 	store.checkIsProxyRunning()
 	loadingBar.finish()
