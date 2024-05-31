@@ -8,6 +8,7 @@ import {
 } from '@vicons/material'
 import axios from 'axios';
 import type { Frontend } from 'env';
+import { useToast } from 'vue-toastification';
 function renderIcon(icon: Component) {
 	return () => h(NIcon, null, { default: () => h(icon) })
 }
@@ -45,13 +46,35 @@ async function createProxy() {
 	})
 		.then(res => {
 			console.log(res.data)
+			useToast().success('Proxy created')
 		})
 		.catch(err => {
 			console.log(err.message)
+			useToast().error('Failed to create proxy')
 		})
 	port.value = 80
 	domain.value = ''
 	backends.value = [{ addr: '' }]
+	await getProxies()
+	loadingBar.finish()
+}
+
+async function deleteProxy(pr: Frontend) {
+	loadingBar.start()
+	await axios.delete<string>(`${import.meta.env.VITE_APP_API}/api/proxy`, {
+		data: {
+			id: pr.id
+		}
+	})
+		.then(res => {
+			console.log(res.data)
+			useToast().success('Proxy deleted')
+		})
+		.catch(err => {
+			console.log(err.message)
+			useToast().error('Failed to delete proxy')
+		})
+
 	await getProxies()
 	loadingBar.finish()
 }
@@ -72,9 +95,11 @@ async function runApply() {
 	await axios.post<string>(`${import.meta.env.VITE_APP_API}/api/proxy/apply`)
 		.then(res => {
 			console.log(res.data)
+			useToast().success('Proxy applied')
 		})
 		.catch(err => {
 			console.log(err.message)
+			useToast().error('Failed to apply proxy')
 		})
 	loadingBar.finish()
 }
@@ -134,6 +159,11 @@ async function runApply() {
 						</td>
 						<td>
 							{{ pr.backends.map(b => b.address).join(', ') }}
+						</td>
+						<td>
+							<n-space>
+								<n-button type="error" @click="deleteProxy(pr)">Delete</n-button>
+							</n-space>
 						</td>
 					</tr>
 				</tbody>

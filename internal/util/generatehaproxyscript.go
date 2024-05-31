@@ -28,12 +28,14 @@ func GenerateProxyConfig(s t.Server) error {
 			return err
 		}
 		frontendName := frontendName(port)
+		// add port listener
 		frontendCfg += fmt.Sprintf("\n\nfrontend %s\n  bind :%d\n  timeout client 1m",
 			frontendName, port,
 		)
+
+		// match domains with acls to backends
 		for _, frontend := range frontends {
 			aclFrontendName := fmt.Sprintf("ACL_%d", frontend.ID)
-
 			matchAclDomain := fmt.Sprintf("%s:%d", frontend.Domain, frontend.Port)
 			if frontend.Port == 80 {
 				matchAclDomain = frontend.Domain
@@ -45,6 +47,7 @@ func GenerateProxyConfig(s t.Server) error {
 			backendName := backendName(frontend)
 			frontendCfg += fmt.Sprintf("\n  use_backend %s if %s", backendName, aclFrontendName)
 		}
+		// add default backend no-match
 		frontendCfg += "\n  default_backend no-match"
 
 	}
@@ -59,20 +62,28 @@ func GenerateProxyConfig(s t.Server) error {
 	}
 	for _, frontend := range frontends {
 		backendName := backendName(frontend)
+		// backend base config
 		backendCfg += fmt.Sprintf("\n\nbackend %s\n  mode http\n  balance roundrobin", backendName)
+		// backend health check
+		backendCfg += "\n  option httpchk\n  http-check send meth GET  uri /"
+
+		// backend servers
 		for i, backend := range frontend.Backends {
 			serverName := serverName(frontend, i)
 			backendCfg += fmt.Sprintf("\n  server %s %s check  inter 2s  fall 5  rise 1", serverName, backend.Address)
 		}
 	}
 
+	// assemble config
 	cfg := defaultsCfg + frontendCfg + backendCfg + "\n"
 	wasRunning := app.Proxy.IsRunning()
 	app.Proxy.Stop()
+	// write config
 	if err := os.WriteFile("haproxy/haproxy.cfg", []byte(cfg), 0644); err != nil {
 		tx.Rollback()
 		return err
 	}
+
 	if wasRunning {
 		app.Proxy.Start()
 	}

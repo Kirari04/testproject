@@ -19,7 +19,8 @@
     "pinia": "^2.1.7",
     "vfonts": "^0.0.3",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.3.0",
+    "vue-toastification": "next"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",

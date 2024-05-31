@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { NCard, useLoadingBar, NTag, NFlex, NButton } from 'naive-ui'
 import { onMounted, ref } from 'vue';
+import { useToast } from 'vue-toastification';
 const loadingBar = useLoadingBar()
 onMounted(async () => {
 	loadingBar.start()
@@ -25,6 +26,7 @@ async function checkStatus() {
 async function startProxy() {
 	loadingBar.start()
 	await axios.get<string>(`${import.meta.env.VITE_APP_API}/api/start`)
+	useToast().success('Proxy started')
 	await checkStatus()
 	loadingBar.finish()
 }
@@ -32,6 +34,7 @@ async function startProxy() {
 async function stopProxy() {
 	loadingBar.start()
 	await axios.get<string>(`${import.meta.env.VITE_APP_API}/api/stop`)
+	useToast().success('Proxy stopped')
 	await checkStatus()
 	loadingBar.finish()
 }
