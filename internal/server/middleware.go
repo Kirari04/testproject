@@ -1,13 +1,13 @@
 package server
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -46,10 +46,14 @@ func (s *Server) Middleware() error {
 		ErrorMessage: "timeout",
 		OnTimeoutRouteErrorHandler: func(err error, c echo.Context) {
 			log.Error().
-				Err(errors.New("timeout")).
-				Str("URI", c.Request().URL.String()).
+				Err(err).
+				Str("URI", c.Request().URL.RequestURI()).
 				Int("status", http.StatusServiceUnavailable).
-				Msg("request")
+				Str("remote_ip", c.RealIP()).
+				Interface("request_id", c.Get("id")).
+				Str("method", c.Request().Method).
+				Int64("response_size", c.Response().Size).
+				Msg("timeout")
 		},
 		Timeout: 30 * time.Second,
 	}))
@@ -65,23 +69,52 @@ func (s *Server) Middleware() error {
 			return c.Request().URL.Path == "/favicon.ico"
 		},
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			var logMe *zerolog.Event
-			if v.Error != nil {
-				logMe = log.Error().
-					Err(v.Error)
-			} else {
-				logMe = log.Info()
+			if v.Error == nil {
+				log.Info().Str("URI", v.URI).
+					Int("status", v.Status).
+					Dur("latency", v.Latency).
+					Str("remote_ip", v.RemoteIP).
+					Interface("request_id", c.Get("id")).
+					Str("method", v.Method).
+					Int64("response_size", v.ResponseSize).
+					Msg("request")
 			}
-			logMe.Str("URI", v.URI).
-				Int("status", v.Status).
-				Dur("latency", v.Latency).
-				Str("remote_ip", v.RemoteIP).
-				Interface("request_id", c.Get("id")).
-				Str("method", v.Method).
-				Int64("response_size", v.ResponseSize).
-				Msg("request")
 			return nil
 		},
 	}))
+	s.e.HTTPErrorHandler = func(err error, c echo.Context) {
+		code := http.StatusInternalServerError
+		he, ok := err.(*echo.HTTPError)
+		if ok {
+			code = he.Code
+		}
+
+		log.Error().
+			Err(err).
+			Str("URI", c.Request().URL.RequestURI()).
+			Int("status", code).
+			Str("remote_ip", c.RealIP()).
+			Interface("request_id", c.Get("id")).
+			Str("method", c.Request().Method).
+			Int64("response_size", c.Response().Size).
+			Msg("HTTPErrorHandler")
+
+		// if is http error
+		if ok {
+			if strings.HasPrefix(c.Request().URL.Path, "/api") {
+				c.JSON(code, map[string]string{"error": fmt.Sprint(he.Message)})
+			} else {
+				c.String(code, fmt.Sprint(he.Message))
+			}
+		}
+		if !ok {
+			if strings.HasPrefix(c.Request().URL.Path, "/api") {
+				c.JSON(code, map[string]string{"error": "internal server error"})
+			} else {
+				c.String(code, "internal server error")
+			}
+		}
+
+	}
 	return nil
 }
