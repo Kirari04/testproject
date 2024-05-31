@@ -4,48 +4,75 @@ import (
 	"bytes"
 	"os/exec"
 	"sync"
+	"testproject/internal/m"
+	"testproject/internal/t"
 
 	"github.com/rs/zerolog/log"
 )
 
 type Haproxy struct {
+	i        HaproxyInternal
+	s        t.Server
+	stopChan chan int
+}
+
+type HaproxyInternal struct {
 	isRunning bool
 	Cmd       *exec.Cmd
-	stopChan  chan int
+
 	sync.Mutex
 }
 
-func NewHaproxy() *Haproxy {
+func NewHaproxy(s t.Server) *Haproxy {
 	return &Haproxy{
-		isRunning: false,
-		Cmd:       nil,
-		stopChan:  make(chan int),
+		i: HaproxyInternal{
+			isRunning: false,
+			Cmd:       nil,
+		},
+		stopChan: make(chan int),
+		s:        s,
 	}
 }
 
 func (h *Haproxy) Start() {
-	h.Lock()
-	if h.isRunning {
-		h.Unlock()
+	h.i.Lock()
+	if h.i.isRunning {
+		h.i.Unlock()
 		return
 	}
 
-	h.Cmd = exec.Command("haproxy", "-f", "./haproxy/haproxy.cfg")
+	h.i.Cmd = exec.Command("haproxy", "-f", "./haproxy/haproxy.cfg")
 	var stdOut, stdErr bytes.Buffer
-	h.Cmd.Stdout = &stdOut
-	h.Cmd.Stderr = &stdErr
+	h.i.Cmd.Stdout = &stdOut
+	h.i.Cmd.Stderr = &stdErr
 
 	log.Info().Msg("haproxy is starting")
-	if err := h.Cmd.Start(); err != nil {
+	if err := h.i.Cmd.Start(); err != nil {
 		log.Error().Err(err).
 			Str("stdout", stdOut.String()).Str("stderr", stdErr.String()).
 			Msg("failed to start haproxy")
 	}
 
 	log.Info().Msg("haproxy is started")
-	h.isRunning = true
+	tx := h.s.DB()
+	h.i.isRunning = true
 
-	h.Unlock()
+	var setting m.Setting
+	if err := tx.First(&setting).Error; err != nil {
+		log.Error().Err(err).Msg("failed to get setting")
+		tx.Rollback()
+		h.i.Unlock()
+		return
+	}
+	setting.ShouldProxyRun = true
+	if err := tx.Save(&setting).Error; err != nil {
+		log.Error().Err(err).Msg("failed to update setting")
+		tx.Rollback()
+		h.i.Unlock()
+		return
+	}
+
+	h.i.Unlock()
 
 	go func() {
 		for {
@@ -62,29 +89,49 @@ func (h *Haproxy) Start() {
 		}
 	}()
 	go func() {
-		<-h.stopChan
-		h.Lock()
-		if h.Cmd != nil && h.Cmd.Process != nil {
-			h.Cmd.Process.Kill()
+		for {
+			<-h.stopChan
+			h.i.Lock()
+			if h.i.Cmd != nil && h.i.Cmd.Process != nil {
+				h.i.Cmd.Process.Kill()
+			}
+			h.i.Cmd = nil
+
+			tx := h.s.DB()
+			h.i.isRunning = false
+
+			var setting m.Setting
+			if err := tx.First(&setting).Error; err != nil {
+				log.Error().Err(err).Msg("failed to get setting")
+				tx.Rollback()
+				h.i.Unlock()
+				return
+			}
+			setting.ShouldProxyRun = false
+			if err := tx.Save(&setting).Error; err != nil {
+				log.Error().Err(err).Msg("failed to update setting")
+				tx.Rollback()
+				h.i.Unlock()
+				return
+			}
+
+			h.i.Unlock()
+			log.Info().Msg("haproxy is being stopped")
 		}
-		h.Cmd = nil
-		h.isRunning = false
-		h.Unlock()
-		log.Info().Msg("haproxy is being stopped")
 	}()
 }
 
 func (h *Haproxy) Stop() {
-	h.Lock()
-	defer h.Unlock()
-	if !h.isRunning {
+	h.i.Lock()
+	defer h.i.Unlock()
+	if !h.i.isRunning {
 		return
 	}
 	h.stopChan <- 1
 }
 
 func (h *Haproxy) IsRunning() bool {
-	h.Lock()
-	defer h.Unlock()
-	return h.isRunning
+	h.i.Lock()
+	defer h.i.Unlock()
+	return h.i.isRunning
 }
