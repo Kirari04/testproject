@@ -11,11 +11,10 @@ import (
 func GenerateProxyConfig(s t.Server) error {
 	tx := s.DB().Begin()
 	defaultsCfg := "defaults\n  timeout client 1m\n  timeout server 1m\n  timeout connect 1m\n\nbackend no-match\n  mode http\n  http-request deny deny_status 400"
-	// upRatePeersTblRef := "peerscfg/uploadrate"
-	// downRatePeersTblRef := "peerscfg/downloadrate"
-	// peersCfg := "\n\npeers peerscfg\n  peer hapee 127.0.0.1:10000" +
-	// 	"\n  table uploadrate type ip size 1m expire 3600s store bytes_in_rate(1s)" +
-	// 	"\n  table downloadrate type ip size 1m expire 3600s store bytes_out_rate(1s)"
+
+	peersCfg := "\n\npeers peerscfg\n  peer srv 127.0.0.1:10000" +
+		"\n  table stick_out type ipv6 size 1m expire 3600s store bytes_out_rate(1s)" +
+		"\n  table stick_in type ipv6 size 1m expire 3600s store bytes_in_rate(1s)"
 
 	frontendCfg := ``
 	var ports []int
@@ -38,10 +37,6 @@ func GenerateProxyConfig(s t.Server) error {
 			frontendName, port,
 		)
 
-		// add default bandwith limits
-		// frontendCfg += fmt.Sprintf("\n  filter bwlim-in bwlimit_in_default default-limit 10000000 default-period 1s key src table %s", upRatePeersTblRef)
-		// frontendCfg += fmt.Sprintf("\n  filter bwlim-out bwlimit_out_default default-limit 10000000 default-period 1s key src table %s", downRatePeersTblRef)
-
 		// match domains with acls to backends
 		for _, frontend := range frontends {
 			aclFrontendName := fmt.Sprintf("ACL_%d", frontend.ID)
@@ -55,13 +50,16 @@ func GenerateProxyConfig(s t.Server) error {
 			aclFrontendName := fmt.Sprintf("ACL_%d", frontend.ID)
 			bwLimitInName := fmt.Sprintf("bwlimit_in_%d", frontend.ID)
 			bwLimitOutName := fmt.Sprintf("bwlimit_out_%d", frontend.ID)
+			stickTableInName := "peerscfg/stick_in"
+			stickTableOutName := "peerscfg/stick_out"
 
 			// match bandwith limits with acls
 			if frontend.DefBwInLimit > 0 {
-				frontendCfg += fmt.Sprintf("\n  filter bwlim-in %s default-limit %d default-period %ds",
+				frontendCfg += fmt.Sprintf(
+					"\n  filter bwlim-in %s key src,ipmask(32,64) table %s limit %d min-size 2896",
 					bwLimitInName,
-					frontend.DefBwInLimit*frontend.DefBwInLimitUnit,
-					frontend.DefBwInPeriod,
+					stickTableInName,
+					uint((frontend.DefBwInLimit*frontend.DefBwInLimitUnit)/frontend.DefBwInPeriod),
 				)
 				frontendCfg += fmt.Sprintf("\n  http-request set-bandwidth-limit %s if %s",
 					bwLimitInName,
@@ -69,10 +67,11 @@ func GenerateProxyConfig(s t.Server) error {
 				)
 			}
 			if frontend.DefBwOutLimit > 0 {
-				frontendCfg += fmt.Sprintf("\n  filter bwlim-out %s default-limit %d default-period %ds",
+				frontendCfg += fmt.Sprintf(
+					"\n  filter bwlim-out %s key src,ipmask(32,64) table %s limit %d min-size 2896",
 					bwLimitOutName,
-					frontend.DefBwOutLimit*frontend.DefBwOutLimitUnit,
-					frontend.DefBwOutPeriod,
+					stickTableOutName,
+					uint((frontend.DefBwOutLimit*frontend.DefBwOutLimitUnit)/frontend.DefBwOutPeriod),
 				)
 				frontendCfg += fmt.Sprintf("\n  http-request set-bandwidth-limit %s if %s",
 					bwLimitOutName,
@@ -105,9 +104,10 @@ func GenerateProxyConfig(s t.Server) error {
 		backendName := backendName(frontend)
 		// backend base config
 		backendCfg += fmt.Sprintf("\n\nbackend %s\n  mode http\n  balance roundrobin", backendName)
+		// backend bandwith limitation
+		backendCfg += "\n  stick-table type ipv6 size 1m expire 3600s store bytes_out_rate(1s)"
 		// backend health check
 		backendCfg += "\n  option httpchk\n  http-check send meth GET  uri /"
-
 		// backend servers
 		for i, backend := range frontend.Backends {
 			serverName := serverName(frontend, i)
@@ -121,7 +121,7 @@ func GenerateProxyConfig(s t.Server) error {
 	}
 
 	// assemble config
-	cfg := defaultsCfg + frontendCfg + backendCfg + "\n"
+	cfg := defaultsCfg + peersCfg + frontendCfg + backendCfg + "\n"
 	wasRunning := app.Proxy.IsRunning()
 	app.Proxy.Stop()
 	// write config
