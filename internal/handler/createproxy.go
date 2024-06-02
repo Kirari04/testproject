@@ -11,9 +11,15 @@ import (
 type CreateProxyHandler struct {
 	s      t.Server
 	values struct {
-		Port     int    `json:"port"`
-		Domain   string `json:"domain"`
-		Backends []struct {
+		Port           int    `json:"port"`
+		Domain         string `json:"domain"`
+		BwInLimit      uint   `json:"bw_in_limit"`
+		BwInLimitUnit  uint   `json:"bw_in_limit_unit"`
+		BwInPeriod     uint   `json:"bw_in_period"`
+		BwOutLimit     uint   `json:"bw_out_limit"`
+		BwOutLimitUnit uint   `json:"bw_out_limit_unit"`
+		BwOutPeriod    uint   `json:"bw_out_period"`
+		Backends       []struct {
 			Address string `json:"address"`
 		}
 	}
@@ -30,8 +36,14 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 
 	tx := h.s.DB().Begin()
 	frontend := m.Frontend{
-		Port:   h.values.Port,
-		Domain: h.values.Domain,
+		Port:              h.values.Port,
+		Domain:            h.values.Domain,
+		DefBwInLimit:      h.values.BwInLimit,
+		DefBwInLimitUnit:  h.values.BwInLimitUnit,
+		DefBwInPeriod:     h.values.BwInPeriod,
+		DefBwOutLimit:     h.values.BwOutLimit,
+		DefBwOutLimitUnit: h.values.BwOutLimitUnit,
+		DefBwOutPeriod:    h.values.BwOutPeriod,
 	}
 	if err := tx.Create(&frontend).Error; err != nil {
 		tx.Rollback()

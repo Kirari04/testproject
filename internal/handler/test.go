@@ -12,7 +12,7 @@ import (
 
 func Test(c echo.Context) error {
 	// haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg
-	cmd := exec.Command("haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg")
+	cmd := exec.Command("haproxy", "-c", "-f", "haproxy/haproxy.cfg")
 	var stdOut, stdErr bytes.Buffer
 	cmd.Stdout = &stdOut
 	cmd.Stderr = &stdErr

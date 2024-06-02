@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NCard, useLoadingBar, NSpace, NInput, NInputNumber, NButton, NIcon, NTable, NTag } from 'naive-ui'
+import { NCard, useLoadingBar, NSpace, NInput, NInputNumber, NButton, NIcon, NTable, NTag, NSelect } from 'naive-ui'
 import { onMounted, ref, h } from 'vue'
 import { type Component } from 'vue'
 import {
@@ -30,7 +30,27 @@ const proxies = ref<Frontend[]>([])
 
 const port = ref(80)
 const domain = ref('')
+const bwInLimit = ref(0)
+const bwInLimitUnit = ref(1)
+const bwInPeriod = ref(1)
+const bwOutLimit = ref(0)
+const bwOutLimitUnit = ref(1)
+const bwOutPeriod = ref(1)
 const backends = ref<{ addr: string }[]>([{ addr: '' }])
+
+const bwUnits = [{
+	label: 'Bytes',
+	value: 1,
+}, {
+	label: 'Kilobytes',
+	value: 1 * 1024,
+}, {
+	label: 'Megabytes',
+	value: 1 * 1024 * 1024,
+}, {
+	label: 'Gigabytes',
+	value: 1 * 1024 * 1024 * 1024,
+}]
 
 function addBackend() {
 	backends.value.push({ addr: '' })
@@ -46,6 +66,12 @@ async function createProxy() {
 	await axios.post<string>(`${import.meta.env.VITE_APP_API}/api/proxy`, {
 		port: port.value,
 		domain: domain.value,
+		bw_in_limit: bwInLimit.value,
+		bw_in_limit_unit: bwInLimitUnit.value,
+		bw_in_period: bwInPeriod.value,
+		bw_out_limit: bwOutLimit.value,
+		bw_out_limit_unit: bwOutLimitUnit.value,
+		bw_out_period: bwOutPeriod.value,
 		backends: backends.value.map(b => ({ address: b.addr })),
 	})
 		.then(res => {
@@ -138,6 +164,46 @@ async function runApply() {
 			<strong>Domain</strong>
 			<n-space>
 				<n-input v-model:value="domain" type="text" placeholder="example.com" />
+			</n-space>
+			<div>
+				<strong>Bandwith</strong>
+				<div>If the limit is 0, the bandwidth is unlimited.</div>
+			</div>
+			<n-space vertical>
+				<strong>Upload</strong>
+				<n-space>
+					<div>
+						Limit
+						<n-input-number v-model:value="bwInLimit" placeholder="0" />
+					</div>
+					<div>
+						Unit
+						<n-select v-model:value="bwInLimitUnit"
+							:options="bwUnits.map(u => ({ label: u.label, value: u.value }))"
+							style="min-width: 130px;" />
+					</div>
+					<div>
+						Period (seconds)
+						<n-input-number v-model:value="bwInPeriod" placeholder="0" />
+					</div>
+				</n-space>
+				<strong>Download</strong>
+				<n-space>
+					<div>
+						Limit
+						<n-input-number v-model:value="bwOutLimit" placeholder="0" />
+					</div>
+					<div>
+						Unit
+						<n-select v-model:value="bwOutLimitUnit"
+							:options="bwUnits.map(u => ({ label: u.label, value: u.value }))"
+							style="min-width: 130px;" />
+					</div>
+					<div>
+						Period (seconds)
+						<n-input-number v-model:value="bwOutPeriod" placeholder="0" />
+					</div>
+				</n-space>
 			</n-space>
 			<strong>Backends</strong>
 			<n-space vertical>

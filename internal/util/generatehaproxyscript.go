@@ -11,6 +11,11 @@ import (
 func GenerateProxyConfig(s t.Server) error {
 	tx := s.DB().Begin()
 	defaultsCfg := "defaults\n  timeout client 1m\n  timeout server 1m\n  timeout connect 1m\n\nbackend no-match\n  mode http\n  http-request deny deny_status 400"
+	// upRatePeersTblRef := "peerscfg/uploadrate"
+	// downRatePeersTblRef := "peerscfg/downloadrate"
+	// peersCfg := "\n\npeers peerscfg\n  peer hapee 127.0.0.1:10000" +
+	// 	"\n  table uploadrate type ip size 1m expire 3600s store bytes_in_rate(1s)" +
+	// 	"\n  table downloadrate type ip size 1m expire 3600s store bytes_out_rate(1s)"
 
 	frontendCfg := ``
 	var ports []int
@@ -33,6 +38,10 @@ func GenerateProxyConfig(s t.Server) error {
 			frontendName, port,
 		)
 
+		// add default bandwith limits
+		// frontendCfg += fmt.Sprintf("\n  filter bwlim-in bwlimit_in_default default-limit 10000000 default-period 1s key src table %s", upRatePeersTblRef)
+		// frontendCfg += fmt.Sprintf("\n  filter bwlim-out bwlimit_out_default default-limit 10000000 default-period 1s key src table %s", downRatePeersTblRef)
+
 		// match domains with acls to backends
 		for _, frontend := range frontends {
 			aclFrontendName := fmt.Sprintf("ACL_%d", frontend.ID)
@@ -44,7 +53,39 @@ func GenerateProxyConfig(s t.Server) error {
 		}
 		for _, frontend := range frontends {
 			aclFrontendName := fmt.Sprintf("ACL_%d", frontend.ID)
+			bwLimitInName := fmt.Sprintf("bwlimit_in_%d", frontend.ID)
+			bwLimitOutName := fmt.Sprintf("bwlimit_out_%d", frontend.ID)
+
+			// match bandwith limits with acls
+			if frontend.DefBwInLimit > 0 {
+				frontendCfg += fmt.Sprintf("\n  filter bwlim-in %s default-limit %d default-period %ds",
+					bwLimitInName,
+					frontend.DefBwInLimit*frontend.DefBwInLimitUnit,
+					frontend.DefBwInPeriod,
+				)
+				frontendCfg += fmt.Sprintf("\n  http-request set-bandwidth-limit %s if %s",
+					bwLimitInName,
+					aclFrontendName,
+				)
+			}
+			if frontend.DefBwOutLimit > 0 {
+				frontendCfg += fmt.Sprintf("\n  filter bwlim-out %s default-limit %d default-period %ds",
+					bwLimitOutName,
+					frontend.DefBwOutLimit*frontend.DefBwOutLimitUnit,
+					frontend.DefBwOutPeriod,
+				)
+				frontendCfg += fmt.Sprintf("\n  http-request set-bandwidth-limit %s if %s",
+					bwLimitOutName,
+					aclFrontendName,
+				)
+			}
+
+		}
+		// add backends based on acls
+		for _, frontend := range frontends {
+			aclFrontendName := fmt.Sprintf("ACL_%d", frontend.ID)
 			backendName := backendName(frontend)
+			// match backends with acls
 			frontendCfg += fmt.Sprintf("\n  use_backend %s if %s", backendName, aclFrontendName)
 		}
 		// add default backend no-match
