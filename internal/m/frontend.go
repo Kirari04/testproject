@@ -25,5 +25,10 @@ type Frontend struct {
 	// Default Download Bandwith Period in seconds
 	DefBwOutPeriod uint `gorm:"column:bw_out_period" json:"bw_out_period"`
 
+	// Default Ratelimit
+	DefRateLimit uint `gorm:"column:rate_limit" json:"rate_limit"`
+	// Default Ratelimit Period in seconds
+	DefRatePeriod uint `gorm:"column:rate_period" json:"rate_period"`
+
 	Backends []Backend `json:"backends"`
 }

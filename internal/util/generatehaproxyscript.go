@@ -41,7 +41,7 @@ func GenerateProxyConfig(s t.Server) error {
 		}
 		frontendName := frontendName(port)
 		// add port listener
-		frontendCfg += fmt.Sprintf("\n\nfrontend %s\n  bind :%d\n  timeout client 1m",
+		frontendCfg += fmt.Sprintf("\n\nfrontend %s\n  mode http\n  bind :%d\n  timeout client 1m",
 			frontendName, port,
 		)
 
@@ -86,6 +86,21 @@ func GenerateProxyConfig(s t.Server) error {
 					aclFrontendName,
 				)
 			}
+			// add http rate limit
+			if frontend.DefRateLimit > 0 {
+				peersCfg += fmt.Sprintf(
+					"\n  table stick_http_%d type ipv6 size 5m expire %ds store http_req_rate(%ds)",
+					frontend.ID,
+					frontend.DefRatePeriod,
+					frontend.DefRatePeriod,
+				)
+				frontendCfg += fmt.Sprintf("\n  http-request track-sc0 src table peerscfg/stick_http_%d", frontend.ID) +
+					fmt.Sprintf(
+						"\n  http-request deny deny_status 429 if { sc_http_req_rate(0,peerscfg/stick_http_%d) gt %d }",
+						frontend.ID,
+						frontend.DefRateLimit,
+					)
+			}
 
 		}
 		// add backends based on acls
@@ -112,8 +127,6 @@ func GenerateProxyConfig(s t.Server) error {
 		backendName := backendName(frontend)
 		// backend base config
 		backendCfg += fmt.Sprintf("\n\nbackend %s\n  mode http\n  balance roundrobin", backendName)
-		// backend bandwith limitation
-		backendCfg += "\n  stick-table type ipv6 size 1m expire 3600s store bytes_out_rate(1s)"
 		// backend health check
 		backendCfg += "\n  option httpchk\n  http-check send meth GET  uri /"
 		// backend servers

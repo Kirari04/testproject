@@ -36,6 +36,8 @@ const bwInPeriod = ref(1)
 const bwOutLimit = ref(0)
 const bwOutLimitUnit = ref(1)
 const bwOutPeriod = ref(1)
+const rateLimit = ref(0)
+const ratePeriod = ref(1)
 const backends = ref<{ addr: string }[]>([{ addr: '' }])
 
 const bwUnits = [{
@@ -72,9 +74,11 @@ async function createProxy() {
 		bw_out_limit: bwOutLimit.value,
 		bw_out_limit_unit: bwOutLimitUnit.value,
 		bw_out_period: bwOutPeriod.value,
+		rate_limit: rateLimit.value,
+		rate_period: ratePeriod.value,
 		backends: backends.value.map(b => ({ address: b.addr })),
 	})
-		.then(res => {
+		.then(() => {
 			useToast().success('Proxy created')
 		})
 		.catch(err => {
@@ -100,7 +104,7 @@ async function deleteProxy(pr: Frontend) {
 			id: pr.id
 		}
 	})
-		.then(res => {
+		.then(() => {
 			useToast().success('Proxy deleted')
 		})
 		.catch(err => {
@@ -205,9 +209,20 @@ async function runApply() {
 					</div>
 				</n-space>
 			</n-space>
+			<strong>Rate limit</strong>
+			<n-space>
+				<div>
+					Limit
+					<n-input-number v-model:value="rateLimit" placeholder="0" />
+				</div>
+				<div>
+					Period (seconds)
+					<n-input-number v-model:value="ratePeriod" placeholder="0" />
+				</div>
+			</n-space>
 			<strong>Backends</strong>
 			<n-space vertical>
-				<n-space v-for="(backend, i) in backends">
+				<n-space v-for="(backend, i) in backends" :key="i">
 					<n-input v-model:value="backend.addr" type="text" placeholder="127.0.0.1:8080" />
 					<n-button :render-icon="renderIcon(MinusRound)" :disabled="backends.length === 1"
 						@click="removeBackend(i)"></n-button>
@@ -216,7 +231,6 @@ async function runApply() {
 					<n-button :render-icon="renderIcon(AddRound)" @click="addBackend()"></n-button>
 				</n-space>
 			</n-space>
-
 			<n-button type="primary" @click="createProxy()">Save</n-button>
 		</n-space>
 	</n-card>
@@ -243,7 +257,7 @@ async function runApply() {
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="pr in proxies">
+					<tr v-for="pr in proxies" :key="pr.id">
 						<td>
 							{{ pr.id }}
 						</td>
