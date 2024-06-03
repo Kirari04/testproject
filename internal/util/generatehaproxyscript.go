@@ -12,7 +12,23 @@ import (
 
 func GenerateProxyConfig(s t.Server) error {
 	tx := s.DB().Begin()
-	defaultsCfg := "defaults\n  timeout client 1m\n  timeout server 1m\n  timeout connect 1m\n\nbackend no-match\n  mode http\n  http-request deny deny_status 400"
+	// default config
+	defaultsCfg := "defaults" +
+		"\n  timeout client 1m" +
+		"\n  timeout server 1m" +
+		"\n  timeout connect 1m" +
+		// require modern certificate standards
+		// generated 2024-06-03, Mozilla Guideline v5.7, HAProxy 3.0, OpenSSL 1.1.1k, modern configuration
+		// https://ssl-config.mozilla.org/#server=haproxy&version=3.0&config=modern&openssl=1.1.1k&guideline=5.7
+		"\n\nglobal" +
+		"\n  ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256" +
+		"\n  ssl-default-bind-options prefer-client-ciphers no-sslv3 no-tlsv10 no-tlsv11 no-tlsv12 no-tls-tickets" +
+		"\n  ssl-default-server-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256" +
+		"\n  ssl-default-server-options no-sslv3 no-tlsv10 no-tlsv11 no-tlsv12 no-tls-tickets" +
+		// define default backend
+		"\n\nbackend no-match" +
+		"\n  mode http" +
+		"\n  http-request deny deny_status 410"
 
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -96,10 +112,16 @@ func GenerateProxyConfig(s t.Server) error {
 				)
 				frontendCfg += fmt.Sprintf("\n  http-request track-sc0 src table peerscfg/stick_http_%d", frontend.ID) +
 					fmt.Sprintf(
+						"\n  http-request silent-drop if { sc_http_req_rate(0,peerscfg/stick_http_%d) gt %d }",
+						frontend.ID,
+						frontend.DefRateLimit*10,
+					) +
+					fmt.Sprintf(
 						"\n  http-request deny deny_status 429 if { sc_http_req_rate(0,peerscfg/stick_http_%d) gt %d }",
 						frontend.ID,
 						frontend.DefRateLimit,
 					)
+
 			}
 
 		}
