@@ -17,9 +17,14 @@ func serve(c *cli.Context) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
+	var useTls bool
+	if c.Bool("tls") {
+		useTls = true
+	}
+
 	// Start server
 	go func() {
-		if err := s.Start(); err != nil {
+		if err := s.Start(useTls); err != nil {
 			log.Error().Err(err).Msg("failed to start server")
 		}
 	}()

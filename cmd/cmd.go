@@ -23,6 +23,17 @@ func Cmd() error {
 				Name:   "serve",
 				Usage:  "server the webserver",
 				Action: serve,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "tls",
+						Usage: "use TLS",
+					},
+				},
+			},
+			{
+				Name:   "certgen",
+				Usage:  "generate a self-signed certificate",
+				Action: certgen,
 			},
 		},
 	}

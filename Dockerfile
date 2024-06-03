@@ -27,4 +27,4 @@ COPY --from=builder /app/main /app/main
 COPY haproxy/haproxy.cfg /app/haproxy/haproxy.cfg
 COPY --from=vue /app/dist /app/dist
 
-ENTRYPOINT ["/app/main", "serve"]
+ENTRYPOINT ["/app/main", "serve", "--tls"]
