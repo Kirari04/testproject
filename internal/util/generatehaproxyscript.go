@@ -6,17 +6,25 @@ import (
 	"testproject/internal/app"
 	"testproject/internal/m"
 	"testproject/internal/t"
+
+	"github.com/rs/zerolog/log"
 )
 
 func GenerateProxyConfig(s t.Server) error {
 	tx := s.DB().Begin()
 	defaultsCfg := "defaults\n  timeout client 1m\n  timeout server 1m\n  timeout connect 1m\n\nbackend no-match\n  mode http\n  http-request deny deny_status 400"
 
-	peersCfg := "\n\npeers peerscfg\n  peer srv 127.0.0.1:10000" +
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to get hostname, using localhost")
+		hostname = "localhost"
+	}
+	peersCfg := fmt.Sprintf("\n\npeers peerscfg\n  peer %s 127.0.0.1:10000", hostname) +
 		"\n  table stick_out type ipv6 size 1m expire 3600s store bytes_out_rate(1s)" +
 		"\n  table stick_in type ipv6 size 1m expire 3600s store bytes_in_rate(1s)"
 
 	frontendCfg := ``
+
 	var ports []int
 	if err := tx.Model(&m.Frontend{}).Group("port").Pluck("port", &ports).Error; err != nil {
 		tx.Rollback()
