@@ -111,6 +111,7 @@ func GenerateProxyConfig(s t.Server) error {
 			}
 			// add http rate limit
 			if frontend.DefRateLimit > 0 {
+				// soft limit
 				peersCfg += fmt.Sprintf(
 					"\n  table stick_http_%d type ipv6 size 5m expire %ds store http_req_rate(%ds)",
 					frontend.ID,
@@ -119,14 +120,22 @@ func GenerateProxyConfig(s t.Server) error {
 				)
 				frontendCfg += fmt.Sprintf("\n  http-request track-sc0 src table peerscfg/stick_http_%d", frontend.ID) +
 					fmt.Sprintf(
-						"\n  http-request silent-drop if { sc_http_req_rate(0,peerscfg/stick_http_%d) gt %d }",
-						frontend.ID,
-						frontend.DefRateLimit*10,
-					) +
-					fmt.Sprintf(
 						"\n  http-request deny deny_status 429 if { sc_http_req_rate(0,peerscfg/stick_http_%d) gt %d }",
 						frontend.ID,
 						frontend.DefRateLimit,
+					)
+				// hard limit
+				peersCfg += fmt.Sprintf(
+					"\n  table stick_http_hard_%d type ipv6 size 5m expire %ds store http_req_rate(%ds)",
+					frontend.ID,
+					frontend.DefHardRateLimit,
+					frontend.DefHardRatePeriod,
+				)
+				frontendCfg += fmt.Sprintf("\n  http-request track-sc0 src table peerscfg/stick_http_hard_%d", frontend.ID) +
+					fmt.Sprintf(
+						"\n  http-request silent-drop if { sc_http_req_rate(0,peerscfg/stick_http_hard_%d) gt %d }",
+						frontend.ID,
+						frontend.DefHardRateLimit,
 					)
 
 			}

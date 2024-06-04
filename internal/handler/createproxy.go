@@ -21,6 +21,8 @@ type CreateProxyHandler struct {
 		BwOutPeriod    uint   `json:"bw_out_period"`
 		RateLimit      uint   `json:"rate_limit"`
 		RatePeriod     uint   `json:"rate_period"`
+		HardRateLimit  uint   `json:"hard_rate_limit"`
+		HardRatePeriod uint   `json:"hard_rate_period"`
 		Backends       []struct {
 			Address string `json:"address"`
 		}
@@ -48,6 +50,8 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 		DefBwOutPeriod:    h.values.BwOutPeriod,
 		DefRateLimit:      h.values.RateLimit,
 		DefRatePeriod:     h.values.RatePeriod,
+		DefHardRateLimit:  h.values.HardRateLimit,
+		DefHardRatePeriod: h.values.HardRatePeriod,
 	}
 	if err := tx.Create(&frontend).Error; err != nil {
 		tx.Rollback()

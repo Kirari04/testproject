@@ -29,6 +29,10 @@ type Frontend struct {
 	DefRateLimit uint `gorm:"column:rate_limit" json:"rate_limit"`
 	// Default Ratelimit Period in seconds
 	DefRatePeriod uint `gorm:"column:rate_period" json:"rate_period"`
+	// Default Hard Ratelimit
+	DefHardRateLimit uint `gorm:"column:hard_rate_limit" json:"hard_rate_limit"`
+	// Default Hard Ratelimit Period in seconds
+	DefHardRatePeriod uint `gorm:"column:hard_rate_period" json:"hard_rate_period"`
 
 	Backends []Backend `json:"backends"`
 }
