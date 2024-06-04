@@ -150,11 +150,12 @@ func GenerateProxyConfig(s t.Server) error {
 		// backend base config
 		backendCfg += fmt.Sprintf("\n\nbackend %s\n  mode http\n  balance roundrobin", backendName)
 		// backend health check
-		backendCfg += "\n  option httpchk\n  http-check send meth GET  uri /"
+		// backendCfg += "\n  option httpchk\n  http-check send meth GET  uri /"
 		// backend servers
 		for i, backend := range frontend.Backends {
 			serverName := serverName(frontend, i)
-			backendCfg += fmt.Sprintf("\n  server %s %s check  inter 2s  fall 5  rise 1", serverName, backend.Address)
+			// backendCfg += fmt.Sprintf("\n  server %s %s check  inter 2s  fall 5  rise 1", serverName, backend.Address)
+			backendCfg += fmt.Sprintf("\n  server %s %s", serverName, backend.Address)
 		}
 	}
 
