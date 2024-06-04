@@ -2,7 +2,7 @@
 import { h, nextTick, onMounted, ref, watch } from 'vue'
 import { type Component } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
-import { NLayout, NLayoutSider, NIcon, NMenu, NLoadingBarProvider, NFlex, NAlert, NCard } from 'naive-ui'
+import { NLayout, NLayoutSider, NIcon, NMenu, NLoadingBarProvider, NFlex, NModalProvider } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import {
 	HomeRound,
@@ -64,20 +64,22 @@ router.afterEach((to) => {
 
 <template>
 	<n-loading-bar-provider>
-		<n-layout id="app-layout" has-sider>
-			<n-layout-sider bordered collapse-mode="width" :collapsed-width="64" :width="240" :collapsed="collapsed"
-				show-trigger @collapse="collapsed = true" @expand="collapsed = false">
-				<n-menu v-model:value="activeKey" :collapsed="collapsed" :collapsed-width="64" :collapsed-icon-size="22"
-					:options="menuOptions" />
-			</n-layout-sider>
-			<n-layout vertical>
-				<div :class="`space ${animateRoute ? 'animate-in' : 'animate-out'}`">
-					<n-flex size="large" vertical>
-						<RouterView />
-					</n-flex>
-				</div>
+		<n-modal-provider>
+			<n-layout id="app-layout" has-sider>
+				<n-layout-sider bordered collapse-mode="width" :collapsed-width="64" :width="240" :collapsed="collapsed"
+					show-trigger @collapse="collapsed = true" @expand="collapsed = false">
+					<n-menu v-model:value="activeKey" :collapsed="collapsed" :collapsed-width="64"
+						:collapsed-icon-size="22" :options="menuOptions" />
+				</n-layout-sider>
+				<n-layout vertical>
+					<div :class="`space ${animateRoute ? 'animate-in' : 'animate-out'}`">
+						<n-flex size="large" vertical>
+							<RouterView />
+						</n-flex>
+					</div>
+				</n-layout>
 			</n-layout>
-		</n-layout>
+		</n-modal-provider>
 	</n-loading-bar-provider>
 </template>
 
