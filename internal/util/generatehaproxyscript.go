@@ -57,6 +57,7 @@ func GenerateProxyConfig(s t.Server) error {
 		var frontends []m.Frontend
 		if err := tx.Model(&m.Frontend{}).
 			Preload("Backends").
+			Preload("Aliases").
 			Where("port = ?", port).
 			Find(&frontends).Error; err != nil {
 			tx.Rollback()
@@ -75,7 +76,15 @@ func GenerateProxyConfig(s t.Server) error {
 			if frontend.Port == 80 {
 				matchAclDomain = frontend.Domain
 			}
-			frontendCfg += fmt.Sprintf("\n  acl %s hdr(host) -i %s", aclFrontendName, matchAclDomain)
+			aclRule := fmt.Sprintf("\n  acl %s hdr(host) -i %s", aclFrontendName, matchAclDomain)
+			for _, alias := range frontend.Aliases {
+				matchAclAliasDomain := fmt.Sprintf("%s:%d", alias.Domain, frontend.Port)
+				if frontend.Port == 80 {
+					matchAclAliasDomain = alias.Domain
+				}
+				aclRule += fmt.Sprintf(" || hdr(host) -i %s", matchAclAliasDomain)
+			}
+			frontendCfg += aclRule
 		}
 		for _, frontend := range frontends {
 			aclFrontendName := fmt.Sprintf("ACL_%d", frontend.ID)
@@ -157,6 +166,7 @@ func GenerateProxyConfig(s t.Server) error {
 	var frontends []m.Frontend
 	if err := tx.Model(&m.Frontend{}).
 		Preload("Backends").
+		Preload("Aliases").
 		Find(&frontends).Error; err != nil {
 		tx.Rollback()
 		return err

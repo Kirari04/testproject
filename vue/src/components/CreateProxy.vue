@@ -43,6 +43,7 @@ const ratePeriod = ref(1)
 const hardRateLimit = ref(0)
 const hardRatePeriod = ref(1)
 const backends = ref<{ addr: string }[]>([{ addr: '' }])
+const aliases = ref<{ domain: string }[]>([{ domain: '' }])
 
 const bwUnits = [{
     label: 'Bytes',
@@ -57,6 +58,14 @@ const bwUnits = [{
     label: 'Gigabytes',
     value: 1 * 1024 * 1024 * 1024,
 }]
+
+function addAlias() {
+    aliases.value.push({ domain: '' })
+}
+function removeAlias(index: number) {
+    if (aliases.value.length === 1) return
+    aliases.value.splice(index, 1)
+}
 
 function addBackend() {
     backends.value.push({ addr: '' })
@@ -83,6 +92,7 @@ async function createProxy() {
         hard_rate_limit: hardRateLimit.value,
         hard_rate_period: hardRatePeriod.value,
         backends: backends.value.map(b => ({ address: b.addr })),
+        aliases: aliases.value.map(a => ({ domain: a.domain })),
     })
         .then(() => {
             emit('onCreated')
@@ -118,30 +128,48 @@ async function createProxy() {
         Create Proxy
     </n-button>
     <n-modal v-model:show="showModal">
-        <n-card title="Create Proxy" style="width: 600px" :bordered="false" size="huge" role="dialog" aria-modal="true">
+        <n-card title="Create Proxy" style="width: 700px;" :bordered="false" size="huge" role="dialog"
+            aria-modal="true">
             <n-space vertical>
                 <n-tabs type="line" animated>
                     <n-tab-pane name="details" tab="Details">
                         <n-space vertical>
-                            <h3>Listen on :{{ port }}</h3>
-                            <n-space>
-                                <n-input-number v-model:value="port" placeholder="80" />
-                            </n-space>
-                            <h3>Domain</h3>
-                            <n-space>
-                                <n-input v-model:value="domain" type="text" placeholder="example.com" />
-                            </n-space>
-                            <h3>Backends</h3>
-                            <n-space vertical>
-                                <n-space v-for="(backend, i) in backends" :key="i">
-                                    <n-input v-model:value="backend.addr" type="text" placeholder="127.0.0.1:8080" />
-                                    <n-button :render-icon="renderIcon(MinusRound)" :disabled="backends.length === 1"
-                                        @click="removeBackend(i)"></n-button>
-                                </n-space>
+                            <n-card>
+                                <h3>Domain</h3>
                                 <n-space>
-                                    <n-button :render-icon="renderIcon(AddRound)" @click="addBackend()"></n-button>
+                                    <n-input v-model:value="domain" type="text" placeholder="example.com" />
                                 </n-space>
-                            </n-space>
+                                <h3>Aliases</h3>
+                                <n-space vertical>
+                                    <n-space v-for="(alias, i) in aliases" :key="i">
+                                        <n-input v-model:value="alias.domain" type="text"
+                                            placeholder="alias.example.com" />
+                                        <n-button :render-icon="renderIcon(MinusRound)" :disabled="aliases.length === 1"
+                                            @click="removeAlias(i)"></n-button>
+                                    </n-space>
+                                    <n-space>
+                                        <n-button :render-icon="renderIcon(AddRound)" @click="addAlias()"></n-button>
+                                    </n-space>
+                                </n-space>
+                            </n-card>
+                            <n-card>
+                                <h3>Listen on :{{ port }}</h3>
+                                <n-space>
+                                    <n-input-number v-model:value="port" placeholder="80" />
+                                </n-space>
+                                <h3>Backends</h3>
+                                <n-space vertical>
+                                    <n-space v-for="(backend, i) in backends" :key="i">
+                                        <n-input v-model:value="backend.addr" type="text"
+                                            placeholder="127.0.0.1:8080" />
+                                        <n-button :render-icon="renderIcon(MinusRound)"
+                                            :disabled="backends.length === 1" @click="removeBackend(i)"></n-button>
+                                    </n-space>
+                                    <n-space>
+                                        <n-button :render-icon="renderIcon(AddRound)" @click="addBackend()"></n-button>
+                                    </n-space>
+                                </n-space>
+                            </n-card>
                         </n-space>
                     </n-tab-pane>
                     <n-tab-pane name="bandwith" tab="Bandwith">
@@ -150,75 +178,80 @@ async function createProxy() {
                                 If the limit is 0, the bandwidth limit won't be applied. <br>
                                 The bandwith limit is applied on a per ip basis.
                             </n-alert>
-                            <n-space vertical>
-                                <h3>Upload</h3>
-                                <n-space>
-                                    <div>
-                                        Limit
-                                        <n-input-number v-model:value="bwInLimit" placeholder="0" />
-                                    </div>
-                                    <div>
-                                        Unit
-                                        <n-select v-model:value="bwInLimitUnit"
-                                            :options="bwUnits.map(u => ({ label: u.label, value: u.value }))"
-                                            style="min-width: 130px;" />
-                                    </div>
-                                    <div>
-                                        Period (seconds)
-                                        <n-input-number v-model:value="bwInPeriod" placeholder="0" />
-                                    </div>
+                            <n-card>
+                                <n-space vertical>
+                                    <h3>Upload</h3>
+                                    <n-space>
+                                        <div>
+                                            Limit
+                                            <n-input-number v-model:value="bwInLimit" placeholder="0" />
+                                        </div>
+                                        <div>
+                                            Unit
+                                            <n-select v-model:value="bwInLimitUnit"
+                                                :options="bwUnits.map(u => ({ label: u.label, value: u.value }))"
+                                                style="min-width: 130px;" />
+                                        </div>
+                                        <div>
+                                            Period (seconds)
+                                            <n-input-number v-model:value="bwInPeriod" placeholder="0" />
+                                        </div>
+                                    </n-space>
+                                    <h3>Download</h3>
+                                    <n-space>
+                                        <div>
+                                            Limit
+                                            <n-input-number v-model:value="bwOutLimit" placeholder="0" />
+                                        </div>
+                                        <div>
+                                            Unit
+                                            <n-select v-model:value="bwOutLimitUnit"
+                                                :options="bwUnits.map(u => ({ label: u.label, value: u.value }))"
+                                                style="min-width: 130px;" />
+                                        </div>
+                                        <div>
+                                            Period (seconds)
+                                            <n-input-number v-model:value="bwOutPeriod" placeholder="0" />
+                                        </div>
+                                    </n-space>
                                 </n-space>
-                                <h3>Download</h3>
-                                <n-space>
-                                    <div>
-                                        Limit
-                                        <n-input-number v-model:value="bwOutLimit" placeholder="0" />
-                                    </div>
-                                    <div>
-                                        Unit
-                                        <n-select v-model:value="bwOutLimitUnit"
-                                            :options="bwUnits.map(u => ({ label: u.label, value: u.value }))"
-                                            style="min-width: 130px;" />
-                                    </div>
-                                    <div>
-                                        Period (seconds)
-                                        <n-input-number v-model:value="bwOutPeriod" placeholder="0" />
-                                    </div>
-                                </n-space>
-                            </n-space>
-
+                            </n-card>
                         </n-space>
                     </n-tab-pane>
                     <n-tab-pane name="rate-limit" tab="Rate limit">
                         <n-space vertical>
                             <n-alert type="info">
                                 If the limit is 0, the Rate limit won't be applied. <br>
-                                The rate limit is applied on a per ip basis.
+                                The rate limit is applied on a per ip basis. <br>
+                                <strong>Soft limit</strong> Will respond with a http status code 429 if the limit is
+                                reached. <br>
+                                <strong>Hard limit</strong> Will silently drop the request if the limit is
+                                reached.
                             </n-alert>
-                            <h3>Soft limit</h3>
-                            <n-alert :show-icon="false" type="info">Will respond with a 429 if the limit is reached.</n-alert>
-                            <n-space>
-                                <div>
-                                    Limit
-                                    <n-input-number v-model:value="rateLimit" placeholder="0" />
-                                </div>
-                                <div>
-                                    Period (seconds)
-                                    <n-input-number v-model:value="ratePeriod" placeholder="0" />
-                                </div>
-                            </n-space>
-                            <h3>Hard limit</h3>
-                            <n-alert :show-icon="false" type="info">Will silently drop the request if the limit is reached.</n-alert>
-                            <n-space>
-                                <div>
-                                    Limit
-                                    <n-input-number v-model:value="hardRateLimit" placeholder="0" />
-                                </div>
-                                <div>
-                                    Period (seconds)
-                                    <n-input-number v-model:value="hardRatePeriod" placeholder="0" />
-                                </div>
-                            </n-space>
+                            <n-card>
+                                <h3>Soft limit</h3>
+                                <n-space>
+                                    <div>
+                                        Limit
+                                        <n-input-number v-model:value="rateLimit" placeholder="0" />
+                                    </div>
+                                    <div>
+                                        Period (seconds)
+                                        <n-input-number v-model:value="ratePeriod" placeholder="0" />
+                                    </div>
+                                </n-space>
+                                <h3>Hard limit</h3>
+                                <n-space>
+                                    <div>
+                                        Limit
+                                        <n-input-number v-model:value="hardRateLimit" placeholder="0" />
+                                    </div>
+                                    <div>
+                                        Period (seconds)
+                                        <n-input-number v-model:value="hardRatePeriod" placeholder="0" />
+                                    </div>
+                                </n-space>
+                            </n-card>
                         </n-space>
                     </n-tab-pane>
                 </n-tabs>

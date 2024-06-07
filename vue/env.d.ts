@@ -8,6 +8,7 @@ export interface Frontend {
     port: number
     domain: string
     backends: Backend[]
+    aliases: Alias[]
 }
 
 export interface Backend {
@@ -15,4 +16,11 @@ export interface Backend {
     created_at: string
     updated_at: string
     address: string
+}
+
+export interface Alias {
+    id: number
+    created_at: string
+    updated_at: string
+    domain: string
 }

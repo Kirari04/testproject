@@ -357,6 +357,33 @@ func Connect() (*gorm.DB, error) {
 				return tx.Migrator().DropColumn(&Frontend{}, "DefHardRatePeriod")
 			},
 		},
+		{
+			ID: "8",
+			Migrate: func(tx *gorm.DB) error {
+				type Alias struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Domain string `gorm:"column:domain" json:"domain"`
+
+					FrontendID uint `gorm:"index,column:frontend_id" json:"-"`
+				}
+				return tx.Migrator().CreateTable(&Alias{})
+			},
+			Rollback: func(tx *gorm.DB) error {
+				type Alias struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Domain string `gorm:"column:domain" json:"domain"`
+
+					FrontendID uint `gorm:"index,column:frontend_id" json:"-"`
+				}
+				return db.Migrator().DropTable(&Alias{})
+			},
+		},
 	})
 
 	log.Info().Msg("Migration database")

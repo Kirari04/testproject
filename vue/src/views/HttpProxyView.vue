@@ -117,6 +117,13 @@ async function runApply() {
 							<a :href="`http://${pr.domain}:${pr.port}`" target="_blank" rel="noopener noreferrer">
 								{{ pr.domain }}
 							</a>
+							<span v-for="alias in pr.aliases">
+								<br>
+								<a :href="`http://${alias.domain}:${pr.port}`" target="_blank"
+									rel="noopener noreferrer">
+									{{ alias.domain }}
+								</a>
+							</span>
 						</td>
 						<td>
 							{{ pr.backends.map(b => b.address).join(', ') }}

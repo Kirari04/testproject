@@ -26,6 +26,9 @@ type CreateProxyHandler struct {
 		Backends       []struct {
 			Address string `json:"address"`
 		}
+		Aliases []struct {
+			Domain string `json:"domain"`
+		}
 	}
 }
 
@@ -58,12 +61,22 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 		return err
 	}
 
-	for _, backend := range h.values.Backends {
+	for _, backendRaw := range h.values.Backends {
 		backend := m.Backend{
-			Address:    backend.Address,
+			Address:    backendRaw.Address,
 			FrontendID: frontend.ID,
 		}
 		if err := tx.Create(&backend).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	for _, aliasRaw := range h.values.Aliases {
+		alias := m.Alias{
+			Domain:     aliasRaw.Domain,
+			FrontendID: frontend.ID,
+		}
+		if err := tx.Create(&alias).Error; err != nil {
 			tx.Rollback()
 			return err
 		}

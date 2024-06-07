@@ -35,4 +35,5 @@ type Frontend struct {
 	DefHardRatePeriod uint `gorm:"column:hard_rate_period" json:"hard_rate_period"`
 
 	Backends []Backend `json:"backends"`
+	Aliases  []Alias   `json:"aliases"`
 }
