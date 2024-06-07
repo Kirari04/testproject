@@ -24,3 +24,39 @@ export interface Alias {
     updated_at: string
     domain: string
 }
+
+
+export interface FrontendStatus {
+  frontend_id: number
+  Servers: BackendStatus[]
+  bytes_in_total: number
+  bytes_out_total: number
+  requests_total: number
+  responses_total_1xx: number
+  responses_total_2xx: number
+  responses_total_3xx: number
+  responses_total_4xx: number
+  responses_total_5xx: number
+  responses_total_other: number
+}
+
+export interface BackendStatus {
+  server_id: number
+  address: string
+  hana: number
+  sockerr: number
+  l4ok: number
+  l4tout: number
+  l4con: number
+  l6ok: number
+  l6tout: number
+  l6rsp: number
+  l7tout: number
+  l7rsp: number
+  l7ok: number
+  l7okc: number
+  l7sts: number
+  procerr: number
+  proctout: number
+  procok: number
+}

@@ -127,12 +127,6 @@ func GenerateProxyConfig(s t.Server) error {
 					frontend.DefRatePeriod,
 					frontend.DefRatePeriod,
 				)
-				frontendCfg += fmt.Sprintf("\n  http-request track-sc0 src table peerscfg/stick_http_%d", frontend.ID) +
-					fmt.Sprintf(
-						"\n  http-request deny deny_status 429 if { sc_http_req_rate(0,peerscfg/stick_http_%d) gt %d }",
-						frontend.ID,
-						frontend.DefRateLimit,
-					)
 				// hard limit
 				peersCfg += fmt.Sprintf(
 					"\n  table stick_http_hard_%d type ipv6 size 5m expire %ds store http_req_rate(%ds)",
@@ -140,12 +134,20 @@ func GenerateProxyConfig(s t.Server) error {
 					frontend.DefHardRateLimit,
 					frontend.DefHardRatePeriod,
 				)
-				frontendCfg += fmt.Sprintf("\n  http-request track-sc0 src table peerscfg/stick_http_hard_%d", frontend.ID) +
-					fmt.Sprintf(
-						"\n  http-request silent-drop if { sc_http_req_rate(0,peerscfg/stick_http_hard_%d) gt %d }",
-						frontend.ID,
-						frontend.DefHardRateLimit,
-					)
+
+				frontendCfg +=
+					fmt.Sprintf("\n  http-request track-sc0 src table peerscfg/stick_http_hard_%d", frontend.ID) +
+						fmt.Sprintf("\n  http-request track-sc1 src table peerscfg/stick_http_%d", frontend.ID) +
+						fmt.Sprintf(
+							"\n  http-request silent-drop if { sc_http_req_rate(0,peerscfg/stick_http_hard_%d) gt %d }",
+							frontend.ID,
+							frontend.DefHardRateLimit,
+						) +
+						fmt.Sprintf(
+							"\n  http-request deny deny_status 429 if { sc_http_req_rate(1,peerscfg/stick_http_%d) gt %d }",
+							frontend.ID,
+							frontend.DefRateLimit,
+						)
 
 			}
 
@@ -178,8 +180,8 @@ func GenerateProxyConfig(s t.Server) error {
 		// backend health check
 		backendCfg += "\n  option httpchk\n  http-check send meth GET  uri /"
 		// backend servers
-		for i, backend := range frontend.Backends {
-			serverName := serverName(frontend, i)
+		for _, backend := range frontend.Backends {
+			serverName := serverName(frontend, backend)
 			backendCfg += fmt.Sprintf("\n  server %s %s check  inter 2s  fall 5  rise 1", serverName, backend.Address)
 			// backendCfg += fmt.Sprintf("\n  server %s %s", serverName, backend.Address)
 		}
@@ -214,6 +216,6 @@ func backendName(frontned m.Frontend) string {
 	return fmt.Sprintf("backend_%d", frontned.ID)
 }
 
-func serverName(frontend m.Frontend, i int) string {
-	return fmt.Sprintf("srv_%d_%d", frontend.ID, i)
+func serverName(frontend m.Frontend, backend m.Backend) string {
+	return fmt.Sprintf("srv_%d_%d", frontend.ID, backend.ID)
 }
