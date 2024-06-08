@@ -1,12 +1,18 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"os/exec"
+	"strings"
 	"testproject/internal/app"
 	"testproject/internal/m"
 	"testproject/internal/t"
 
+	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
 
@@ -178,8 +184,19 @@ func GenerateProxyConfig(s t.Server) error {
 		backendName := backendName(frontend)
 		// backend base config
 		backendCfg += fmt.Sprintf("\n\nbackend %s\n  mode http\n  balance roundrobin", backendName)
-		// backend health check
-		backendCfg += "\n  option httpchk\n  http-check send meth GET  uri /"
+		if frontend.HttpCheck != nil &&
+			frontend.HttpCheckMethod != nil &&
+			frontend.HttpCheckPath != nil &&
+			frontend.HttpCheckExpectStatus != nil &&
+			*frontend.HttpCheck {
+			// backend health check
+			backendCfg += fmt.Sprintf(
+				"\n  option httpchk\n  http-check send meth %s  uri %s\n  http-check expect status %d",
+				*frontend.HttpCheckMethod,
+				*frontend.HttpCheckPath,
+				*frontend.HttpCheckExpectStatus,
+			)
+		}
 		// backend servers
 		for _, backend := range frontend.Backends {
 			serverName := serverName(frontend, backend)
@@ -206,16 +223,41 @@ func GenerateProxyConfig(s t.Server) error {
 
 	// assemble config
 	cfg := defaultsCfg + peersCfg + frontendCfg + backendCfg + "\n"
-	wasRunning := app.Proxy.IsRunning()
 	app.Proxy.Stop()
+
+	// get current config
+	file, err := os.Open("haproxy/haproxy.cfg")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	currentCfg, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
 	// write config
 	if err := os.WriteFile("haproxy/haproxy.cfg", []byte(cfg), 0644); err != nil {
 		return err
 	}
 
-	if wasRunning {
-		app.Proxy.Start()
+	// check if config is valid
+	cmd := exec.Command("haproxy", "-c", "-V", "-f", "haproxy/haproxy.cfg")
+	var stdOut, stdErr bytes.Buffer
+	cmd.Stdout = &stdOut
+	cmd.Stderr = &stdErr
+
+	cmd.Run()
+	cmd.Wait()
+
+	if !strings.HasPrefix(strings.TrimSpace(stdOut.String()), "Configuration file is valid") {
+		// rollback config
+		if err := os.WriteFile("haproxy/haproxy.cfg", []byte(currentCfg), 0644); err != nil {
+			return err
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("config Failure [%s] - {%s}", stdOut.String(), stdErr.String()))
 	}
+
+	app.Proxy.Start()
 
 	return nil
 }

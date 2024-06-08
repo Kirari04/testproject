@@ -42,8 +42,15 @@ const rateLimit = ref(0)
 const ratePeriod = ref(1)
 const hardRateLimit = ref(0)
 const hardRatePeriod = ref(1)
+
 const https = ref(false)
 const httpsVerify = ref(false)
+
+const httpCheck = ref(false)
+const httpCheckMethod = ref('GET')
+const httpCheckPath = ref('/')
+const httpCheckExpectStatus = ref(200)
+
 const backends = ref<{ addr: string }[]>([{ addr: '' }])
 const aliases = ref<{ domain: string }[]>([{ domain: '' }])
 
@@ -95,6 +102,10 @@ async function createProxy() {
         hard_rate_period: hardRatePeriod.value,
         https: https.value,
         https_verify: httpsVerify.value,
+        http_check: httpCheck.value,
+        http_check_method: httpCheckMethod.value,
+        http_check_path: httpCheckPath.value,
+        http_check_expect_status: httpCheckExpectStatus.value,
         backends: backends.value.map(b => ({ address: b.addr })).filter(b => b.address !== ''),
         aliases: aliases.value.map(a => ({ domain: a.domain })).filter(a => a.domain !== ''),
     })
@@ -115,6 +126,10 @@ async function createProxy() {
             ratePeriod.value = 1
             https.value = false
             httpsVerify.value = false
+            httpCheck.value = false
+            httpCheckMethod.value = 'GET'
+            httpCheckPath.value = '/'
+            httpCheckExpectStatus.value = 200
             backends.value = [{ addr: '' }]
         })
         .catch(err => {
@@ -179,6 +194,39 @@ async function createProxy() {
                                     </n-space>
                                     <n-space>
                                         <n-button :render-icon="renderIcon(AddRound)" @click="addBackend()"></n-button>
+                                    </n-space>
+                                </n-space>
+                            </n-card>
+                        </n-space>
+                    </n-tab-pane>
+                    <n-tab-pane name="health-check" tab="Health check">
+                        <n-space vertical>
+                            <n-card>
+                                <n-space vertical>
+                                    <h3>Backend Health Check</h3>
+                                    <n-space>
+                                        Enable
+                                        <n-switch v-model:value="httpCheck" />
+                                    </n-space>
+                                    <n-space>
+                                        <div>
+                                            Path
+                                            <n-input v-model:value="httpCheckPath" :disabled="!httpCheck" type="text" placeholder="/" />
+                                        </div>
+                                    </n-space>
+                                    <n-space>
+                                        <div>
+                                            Method
+                                            <n-select v-model:value="httpCheckMethod" :disabled="!httpCheck"
+                                                :options="['GET', 'POST', 'HEAD'].map(m => ({ label: m, value: m }))"
+                                                style="min-width: 130px;" />
+                                        </div>
+                                    </n-space>
+                                    <n-space>
+                                        <div>
+                                            Expect status
+                                            <n-input-number v-model:value="httpCheckExpectStatus" :disabled="!httpCheck" placeholder="200" />
+                                        </div>
                                     </n-space>
                                 </n-space>
                             </n-card>

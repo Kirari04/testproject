@@ -34,6 +34,15 @@ type Frontend struct {
 	// Default Hard Ratelimit Period in seconds
 	DefHardRatePeriod uint `gorm:"column:hard_rate_period" json:"hard_rate_period"`
 
+	// Backend Http Check enabled
+	HttpCheck *bool `gorm:"column:http_check" json:"http_check"`
+	// Backend Http Check Method
+	HttpCheckMethod *string `gorm:"column:http_check_method" json:"http_check_method"`
+	// Backend Http Check Path
+	HttpCheckPath *string `gorm:"column:http_check_path" json:"http_check_path"`
+	// Backend Http Check Expected Status
+	HttpCheckExpectStatus *int `gorm:"column:http_check_expect_status" json:"http_check_expect_status"`
+
 	Backends []Backend `json:"backends"`
 	Aliases  []Alias   `json:"aliases"`
 }
