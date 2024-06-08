@@ -7,14 +7,20 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"testproject/internal/app"
 	"testproject/internal/m"
 	"testproject/internal/t"
 
+	"github.com/labstack/echo/v4"
 	"github.com/prometheus/common/expfmt"
 	"github.com/rs/zerolog/log"
 )
 
 func GetHaproxyStats(s t.Server) (*[]t.ProxyStatus, error) {
+	if !app.Proxy.IsRunning() {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "haproxy is not running")
+	}
+
 	// Step 1: Fetch the metrics
 	url := "http://127.0.0.1:8405/metrics"
 	resp, err := http.Get(url)
