@@ -16,6 +16,8 @@ export interface Backend {
     created_at: string
     updated_at: string
     address: string
+    https: boolean
+    https_verify: boolean
 }
 
 export interface Alias {
@@ -43,7 +45,6 @@ export interface FrontendStatus {
 export interface BackendStatus {
   server_id: number
   address: string
-  hana: number
   sockerr: number
   l4ok: number
   l4tout: number
@@ -56,7 +57,4 @@ export interface BackendStatus {
   l7ok: number
   l7okc: number
   l7sts: number
-  procerr: number
-  proctout: number
-  procok: number
 }
