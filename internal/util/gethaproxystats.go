@@ -65,14 +65,13 @@ func GetHaproxyStats(s t.Server) (*[]t.ProxyStatus, error) {
 				value := metric.GetGauge().GetValue()
 
 				if !strings.Contains(proxy, "_") {
-					log.Warn().Str("proxy", proxy).Msg("invalid proxy name")
 					continue
 				}
 
 				// parse frontend id from proxy name
 				prxPlits := strings.Split(proxy, "_")
 				if len(prxPlits) != 2 {
-					log.Error().Str("proxy", proxy).Msg("invalid proxy name")
+
 					return nil, errors.New("invalid proxy name")
 				}
 				frontendID, err := strconv.Atoi(prxPlits[1])
@@ -178,14 +177,13 @@ func GetHaproxyStats(s t.Server) (*[]t.ProxyStatus, error) {
 				value := metric.GetCounter().GetValue()
 
 				if !strings.Contains(proxy, "_") {
-					log.Warn().Str("proxy", proxy).Msg("invalid proxy name")
 					continue
 				}
 
 				// parse frontend id from proxy name
 				prxPlits := strings.Split(proxy, "_")
 				if len(prxPlits) != 2 {
-					log.Error().Str("proxy", proxy).Msg("invalid proxy name")
+
 					return nil, errors.New("invalid proxy name")
 				}
 				frontendID, err := strconv.Atoi(prxPlits[1])
@@ -228,14 +226,14 @@ func GetHaproxyStats(s t.Server) (*[]t.ProxyStatus, error) {
 				value := metric.GetCounter().GetValue()
 
 				if !strings.Contains(proxy, "_") {
-					log.Warn().Str("proxy", proxy).Msg("invalid proxy name")
+
 					continue
 				}
 
 				// parse frontend id from proxy name
 				prxPlits := strings.Split(proxy, "_")
 				if len(prxPlits) != 2 {
-					log.Error().Str("proxy", proxy).Msg("invalid proxy name")
+
 					return nil, errors.New("invalid proxy name")
 				}
 				frontendID, err := strconv.Atoi(prxPlits[1])
@@ -268,14 +266,14 @@ func GetHaproxyStats(s t.Server) (*[]t.ProxyStatus, error) {
 				value := metric.GetCounter().GetValue()
 
 				if !strings.Contains(proxy, "_") {
-					log.Warn().Str("proxy", proxy).Msg("invalid proxy name")
+
 					continue
 				}
 
 				// parse frontend id from proxy name
 				prxPlits := strings.Split(proxy, "_")
 				if len(prxPlits) != 2 {
-					log.Error().Str("proxy", proxy).Msg("invalid proxy name")
+
 					return nil, errors.New("invalid proxy name")
 				}
 				frontendID, err := strconv.Atoi(prxPlits[1])
