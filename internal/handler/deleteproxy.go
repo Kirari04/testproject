@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testproject/internal/m"
 	"testproject/internal/t"
+	"testproject/internal/util"
 
 	"github.com/labstack/echo/v4"
 )
@@ -25,13 +26,20 @@ func (h *DeleteProxyHandler) Route(c echo.Context) error {
 	}
 
 	tx := h.s.DB().Begin()
-	if err := tx.Delete(&m.Frontend{}, h.values.ID).Error; err != nil {
+	if err := tx.
+		Select("Backends", "Aliases").
+		Delete(&m.Frontend{ID: h.values.ID}).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
+		return err
+	}
+
+	// reload haproxy
+	if err := util.GenerateProxyConfig(h.s); err != nil {
 		return err
 	}
 
