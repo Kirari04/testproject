@@ -2,10 +2,12 @@ package haproxy
 
 import (
 	"bytes"
+	"io"
 	"os/exec"
 	"sync"
 	"testproject/internal/m"
 	"testproject/internal/t"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -13,7 +15,7 @@ import (
 type Haproxy struct {
 	i        HaproxyInternal
 	s        t.Server
-	stopChan chan int
+	stopChan chan bool
 }
 
 type HaproxyInternal struct {
@@ -29,7 +31,7 @@ func NewHaproxy(s t.Server) *Haproxy {
 			isRunning: false,
 			Cmd:       nil,
 		},
-		stopChan: make(chan int),
+		stopChan: make(chan bool),
 		s:        s,
 	}
 }
@@ -74,20 +76,56 @@ func (h *Haproxy) Start() {
 
 	h.i.Unlock()
 
+	// output logs
 	go func() {
 		for {
-			if h.IsRunning() {
+			if !h.IsRunning() {
+				log.Debug().Msg("stop tracking haproxy stderr")
 				return
 			}
 			m, err := stdErr.ReadString('\n')
 			if err != nil {
+				if err == io.EOF {
+					time.Sleep(time.Second * 1)
+					continue
+				}
 				log.Error().Err(err).Msg("failed to read haproxy stderr")
-				h.stopChan <- 1
-				continue
+				return
 			}
-			log.Debug().Str("message", m).Msg("haproxy stderr")
+			if m != "" {
+				log.Debug().Msgf("haproxy: %s", m)
+			}
 		}
 	}()
+	go func() {
+		for {
+			if !h.IsRunning() {
+				log.Debug().Msg("stop tracking haproxy stdout")
+				return
+			}
+			m, err := stdOut.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					time.Sleep(time.Second * 1)
+					continue
+				}
+				log.Error().Err(err).Msg("failed to read haproxy stdout")
+				return
+			}
+			if m != "" {
+				log.Debug().Msgf("haproxy: %s", m)
+			}
+		}
+	}()
+	// listen for exit
+	go func() {
+		err := h.i.Cmd.Wait()
+		if err != nil {
+			log.Error().Err(err).Msg("haproxy exited")
+		}
+		h.stopChan <- true
+	}()
+	// listen for stop signal
 	go func() {
 		for {
 			<-h.stopChan
@@ -117,6 +155,7 @@ func (h *Haproxy) Start() {
 
 			h.i.Unlock()
 			log.Info().Msg("haproxy is being stopped")
+
 		}
 	}()
 }
@@ -127,7 +166,7 @@ func (h *Haproxy) Stop() {
 	if !h.i.isRunning {
 		return
 	}
-	h.stopChan <- 1
+	h.stopChan <- true
 }
 
 func (h *Haproxy) IsRunning() bool {
