@@ -199,11 +199,6 @@ func GetHaproxyStats(s t.Server) (*[]t.ProxyStatus, error) {
 					}
 				}
 
-				log.Debug().
-					Str("proxy", proxy).
-					Str("name", name).
-					Float64("value", value).
-					Msg("parsing bytes in/out")
 				if name == "haproxy_backend_bytes_in_total" {
 					dataStats[frontendID].BytesInTotal = &value
 				} else if name == "haproxy_backend_bytes_out_total" {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NCard, useLoadingBar, NSpace, NInput, NInputNumber, NButton, NIcon, NTabs, NTabPane, NSelect, NModal, NAlert } from 'naive-ui'
+import { NCard, useLoadingBar, NSpace, NInput, NInputNumber, NButton, NIcon, NTabs, NTabPane, NSelect, NModal, NAlert, NSwitch } from 'naive-ui'
 import { onMounted, ref, h } from 'vue'
 import { type Component } from 'vue'
 import {
@@ -42,6 +42,8 @@ const rateLimit = ref(0)
 const ratePeriod = ref(1)
 const hardRateLimit = ref(0)
 const hardRatePeriod = ref(1)
+const https = ref(false)
+const httpsVerify = ref(false)
 const backends = ref<{ addr: string }[]>([{ addr: '' }])
 const aliases = ref<{ domain: string }[]>([{ domain: '' }])
 
@@ -91,8 +93,10 @@ async function createProxy() {
         rate_period: ratePeriod.value,
         hard_rate_limit: hardRateLimit.value,
         hard_rate_period: hardRatePeriod.value,
-        backends: backends.value.map(b => ({ address: b.addr })),
-        aliases: aliases.value.map(a => ({ domain: a.domain })),
+        https: https.value,
+        https_verify: httpsVerify.value,
+        backends: backends.value.map(b => ({ address: b.addr })).filter(b => b.address !== ''),
+        aliases: aliases.value.map(a => ({ domain: a.domain })).filter(a => a.domain !== ''),
     })
         .then(() => {
             emit('onCreated')
@@ -109,6 +113,8 @@ async function createProxy() {
             bwOutPeriod.value = 1
             rateLimit.value = 0
             ratePeriod.value = 1
+            https.value = false
+            httpsVerify.value = false
             backends.value = [{ addr: '' }]
         })
         .catch(err => {
@@ -159,6 +165,12 @@ async function createProxy() {
                                 </n-space>
                                 <h3>Backends</h3>
                                 <n-space vertical>
+                                    <n-space>
+                                        Use HTTPS
+                                        <n-switch v-model:value="https" />
+                                        HTTPS Verify Certificate
+                                        <n-switch v-model:value="httpsVerify" :disabled="!https" />
+                                    </n-space>
                                     <n-space v-for="(backend, i) in backends" :key="i">
                                         <n-input v-model:value="backend.addr" type="text"
                                             placeholder="127.0.0.1:8080" />

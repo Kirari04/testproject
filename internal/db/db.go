@@ -384,6 +384,49 @@ func Connect() (*gorm.DB, error) {
 				return db.Migrator().DropTable(&Alias{})
 			},
 		},
+		{
+			ID: "9",
+			Migrate: func(tx *gorm.DB) error {
+				type Backend struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Address     string `gorm:"column:address" json:"address"`
+					Https       bool   `gorm:"column:https" json:"https"`
+					HttpsVerify bool   `gorm:"column:https_verify" json:"https_verify"`
+
+					FrontendID uint `gorm:"index,column:frontend_id" json:"-"`
+				}
+				if err := tx.Migrator().AddColumn(&Backend{}, "Https"); err != nil {
+					return err
+				}
+				if err := tx.Migrator().AddColumn(&Backend{}, "HttpsVerify"); err != nil {
+					return err
+				}
+				return nil
+			},
+			Rollback: func(tx *gorm.DB) error {
+				type Backend struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Address     string `gorm:"column:address" json:"address"`
+					Https       bool   `gorm:"column:https" json:"https"`
+					HttpsVerify bool   `gorm:"column:https_verify" json:"https_verify"`
+
+					FrontendID uint `gorm:"index,column:frontend_id" json:"-"`
+				}
+				if err := tx.Migrator().DropColumn(&Backend{}, "Https"); err != nil {
+					return err
+				}
+				if err := tx.Migrator().DropColumn(&Backend{}, "HttpsVerify"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
 	})
 
 	log.Info().Msg("Migration database")

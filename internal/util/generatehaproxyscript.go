@@ -25,6 +25,7 @@ func GenerateProxyConfig(s t.Server) error {
 		"\n  ssl-default-bind-options prefer-client-ciphers no-sslv3 no-tlsv10 no-tlsv11 no-tlsv12 no-tls-tickets" +
 		"\n  ssl-default-server-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256" +
 		"\n  ssl-default-server-options no-sslv3 no-tlsv10 no-tlsv11 no-tlsv12 no-tls-tickets" +
+		"\n  ca-base /etc/ssl/certs" +
 		// define default backend
 		"\n\nbackend no-match" +
 		"\n  mode http" +
@@ -182,7 +183,18 @@ func GenerateProxyConfig(s t.Server) error {
 		// backend servers
 		for _, backend := range frontend.Backends {
 			serverName := serverName(frontend, backend)
-			backendCfg += fmt.Sprintf("\n  server %s %s check  inter 2s  fall 5  rise 1", serverName, backend.Address)
+			backendCfg += fmt.Sprintf("\n  server %s %s", serverName, backend.Address)
+			// https
+			if backend.Https {
+				backendCfg += " ssl"
+				if !backend.HttpsVerify {
+					backendCfg += " verify none"
+				} else {
+					backendCfg += " verify required ca-file ca-certificates.crt"
+				}
+			}
+			// health check
+			backendCfg += " check  inter 2s  fall 5  rise 1"
 			// backendCfg += fmt.Sprintf("\n  server %s %s", serverName, backend.Address)
 		}
 	}

@@ -23,6 +23,8 @@ type CreateProxyHandler struct {
 		RatePeriod     uint   `json:"rate_period"`
 		HardRateLimit  uint   `json:"hard_rate_limit"`
 		HardRatePeriod uint   `json:"hard_rate_period"`
+		Https          *bool  `json:"https"`
+		HttpsVerify    *bool  `json:"https_verify"`
 		Backends       []struct {
 			Address string `json:"address"`
 		}
@@ -39,6 +41,14 @@ func NewCreateProxyHandler(s t.Server) *CreateProxyHandler {
 func (h *CreateProxyHandler) Route(c echo.Context) error {
 	if err := c.Bind(&h.values); err != nil {
 		return err
+	}
+	https := false
+	if h.values.Https != nil {
+		https = *h.values.Https
+	}
+	httpsVerify := false
+	if h.values.HttpsVerify != nil {
+		httpsVerify = *h.values.HttpsVerify
 	}
 
 	tx := h.s.DB().Begin()
@@ -63,8 +73,10 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 
 	for _, backendRaw := range h.values.Backends {
 		backend := m.Backend{
-			Address:    backendRaw.Address,
-			FrontendID: frontend.ID,
+			FrontendID:  frontend.ID,
+			Address:     backendRaw.Address,
+			Https:       https,
+			HttpsVerify: httpsVerify,
 		}
 		if err := tx.Create(&backend).Error; err != nil {
 			tx.Rollback()
