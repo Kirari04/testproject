@@ -9,7 +9,7 @@ build-docker:
 	@docker build -t $(dockertag) . --load
 
 run-docker:
-	@docker run --name haproxymngr --rm -p 8080:8080 $(dockertag)
+	@docker run --name haproxymngr --rm --network host -v haproxymngr:/app/data -e ADDR=0.0.0.0:8080 $(dockertag)
 
 release-docker:
 	@docker build -t $(dockertag) . --push
