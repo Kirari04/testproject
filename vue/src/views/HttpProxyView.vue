@@ -55,6 +55,12 @@ async function deleteProxy(pr: Frontend) {
 	loadingBar.finish()
 }
 
+async function reloadProxies() {
+	loadingBar.start()
+	await getProxies()
+	loadingBar.finish()
+}
+
 async function getProxies() {
 	await axios.get<Frontend[]>(`${import.meta.env.VITE_APP_API}/api/proxies`)
 		.then(async res => {
@@ -88,26 +94,6 @@ async function getProxiesStatus() {
 				timeout: 5000,
 			})
 		})
-}
-
-async function runApply() {
-	loadingBar.start()
-	await axios.post<string>(`${import.meta.env.VITE_APP_API}/api/proxy/apply`)
-		.then(res => {
-			console.log(res.data)
-			useToast().success('Proxy applied')
-		})
-		.catch(err => {
-			useToast().error(
-				h(ToastDesc, {
-					title: 'Failed to apply proxy',
-					message: err.response.data ?? err.message,
-				}), {
-				timeout: 5000,
-			})
-		})
-	store.checkIsProxyRunning()
-	loadingBar.finish()
 }
 
 function getProxyStatus(frontendId: number, backendId: number): ProxyStatus | null {
@@ -156,8 +142,8 @@ const statuses: ProxyStatus[] = [
 				<n-tag v-if="!store.isProxyRunning" type="error">
 					Proxy is off
 				</n-tag>
-				<n-button type="primary" @click="runApply()">Apply</n-button>
-				<CreateProxy />
+				<n-button @click="reloadProxies()">Reload List</n-button>
+				<CreateProxy @onCreated="reloadProxies" />
 			</n-space>
 			<n-table :single-line="false">
 				<thead>

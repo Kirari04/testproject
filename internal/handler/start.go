@@ -3,14 +3,26 @@ package handler
 import (
 	"net/http"
 	"testproject/internal/app"
+	"testproject/internal/t"
+	"testproject/internal/util"
 
 	"github.com/labstack/echo/v4"
 )
 
-func Start(c echo.Context) error {
+type StartHandler struct {
+	s t.Server
+}
+
+func NewStartHandler(s t.Server) *StartHandler {
+	return &StartHandler{s: s}
+}
+
+func (h *StartHandler) Route(c echo.Context) error {
 	if app.Proxy.IsRunning() {
-		return c.String(http.StatusOK, "already running")
+		return c.String(http.StatusOK, "proxy is already running")
 	}
-	app.Proxy.Start()
+	if err := util.GenerateProxyConfig(h.s); err != nil {
+		return err
+	}
 	return c.String(http.StatusOK, "ok")
 }
