@@ -78,12 +78,13 @@ func (h *Haproxy) Start() {
 
 	// output logs
 	go func() {
+		tx := h.s.DB()
 		for {
 			if !h.IsRunning() {
 				log.Debug().Msg("stop tracking haproxy stderr")
 				return
 			}
-			m, err := stdErr.ReadString('\n')
+			msg, err := stdErr.ReadString('\n')
 			if err != nil {
 				if err == io.EOF {
 					time.Sleep(time.Second * 1)
@@ -92,18 +93,23 @@ func (h *Haproxy) Start() {
 				log.Error().Err(err).Msg("failed to read haproxy stderr")
 				return
 			}
-			if m != "" {
-				log.Debug().Msgf("haproxy: %s", m)
+			if msg != "" {
+				if err := tx.Create(&m.HaproxyLog{
+					Data: msg,
+				}).Error; err != nil {
+					log.Error().Err(err).Msg("failed to save haproxy log")
+				}
 			}
 		}
 	}()
 	go func() {
+		tx := h.s.DB()
 		for {
 			if !h.IsRunning() {
 				log.Debug().Msg("stop tracking haproxy stdout")
 				return
 			}
-			m, err := stdOut.ReadString('\n')
+			msg, err := stdOut.ReadString('\n')
 			if err != nil {
 				if err == io.EOF {
 					time.Sleep(time.Second * 1)
@@ -112,8 +118,12 @@ func (h *Haproxy) Start() {
 				log.Error().Err(err).Msg("failed to read haproxy stdout")
 				return
 			}
-			if m != "" {
-				log.Debug().Msgf("haproxy: %s", m)
+			if msg != "" {
+				if err := tx.Create(&m.HaproxyLog{
+					Data: msg,
+				}).Error; err != nil {
+					log.Error().Err(err).Msg("failed to save haproxy log")
+				}
 			}
 		}
 	}()

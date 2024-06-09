@@ -8,6 +8,7 @@ import {
 	HomeRound,
 	InfoRound,
 	WebRound,
+	ListRound,
 } from '@vicons/material'
 import { useStore } from './stores/store'
 
@@ -36,6 +37,11 @@ const menuOptions: MenuOption[] = [
 		label: 'Http Proxy',
 		key: '/http-proxy',
 		icon: renderIcon(WebRound),
+	},
+	{
+		label: 'Log',
+		key: '/log',
+		icon: renderIcon(ListRound),
 	},
 	{
 		label: 'About',

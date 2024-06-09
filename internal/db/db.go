@@ -534,6 +534,35 @@ func Connect() (*gorm.DB, error) {
 				return nil
 			},
 		},
+		{
+			ID: "11",
+			Migrate: func(tx *gorm.DB) error {
+				type HaproxyLog struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Data string `gorm:"column:data;size:10240" json:"data"`
+				}
+				if err := tx.Migrator().CreateTable(&HaproxyLog{}); err != nil {
+					return err
+				}
+				return nil
+			},
+			Rollback: func(tx *gorm.DB) error {
+				type HaproxyLog struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Data string `gorm:"column:data;size:10240" json:"data"`
+				}
+				if err := tx.Migrator().DropTable(&HaproxyLog{}); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
 	})
 
 	log.Info().Msg("Migration database")

@@ -58,3 +58,11 @@ export interface BackendStatus {
   l7okc: number
   l7sts: number
 }
+
+
+export interface HaproxyLog {
+  id: number
+  created_at: string
+  updated_at: string
+  data: string
+}
