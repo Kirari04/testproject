@@ -24,7 +24,6 @@ WORKDIR /app
 RUN apk add sqlite haproxy
 
 COPY --from=builder /app/main /app/main
-COPY haproxy/haproxy.cfg /app/haproxy/haproxy.cfg
 COPY --from=vue /app/dist /app/dist
 
 ENTRYPOINT ["/app/main", "serve", "--tls"]
