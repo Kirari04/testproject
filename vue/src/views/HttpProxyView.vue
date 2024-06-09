@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NCard, useLoadingBar, NSpace, NInput, NInputNumber, NButton, NIcon, NTable, NTag, NSelect, NPopover } from 'naive-ui'
+import { NCard, useLoadingBar, NSpace, NButton, NTable, NTag, NPopover } from 'naive-ui'
 import { onMounted, ref, h, onUnmounted } from 'vue'
 import axios from 'axios';
 import type { Frontend, FrontendStatus } from 'env';

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { h, nextTick, onMounted, ref, watch } from 'vue'
+import { h, ref, watch } from 'vue'
 import { type Component } from 'vue'
-import { RouterView, useRoute, useRouter } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import { NLayout, NLayoutSider, NIcon, NMenu, NLoadingBarProvider, NFlex, NModalProvider } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import {

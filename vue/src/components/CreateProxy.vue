@@ -8,9 +8,7 @@ import {
 } from '@vicons/material'
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
-import { useStore } from '@/stores/store';
 import ToastDesc from '@/components/ToastDesc.vue'
-import { request } from 'node_modules/axios/index.cjs';
 
 function renderIcon(icon: Component) {
     return () => h(NIcon, null, { default: () => h(icon) })
