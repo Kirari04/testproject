@@ -41,6 +41,9 @@ func NewServer() *Server {
 	if err := os.MkdirAll(cfg.WorkDir+"/certs", 0755); err != nil {
 		log.Fatal().Err(err).Msg("failed to create work dir certs")
 	}
+	if err := os.MkdirAll("haproxy", 0755); err != nil {
+		log.Fatal().Err(err).Msg("failed to create haproxy dir")
+	}
 
 	db, err := db.Connect()
 	if err != nil {

@@ -250,13 +250,13 @@ func GenerateProxyConfig(s t.Server) error {
 		defer file.Close()
 		currentCfg, err = io.ReadAll(file)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read current config: %w", err)
 		}
 	}
 
 	// write config
 	if err := os.WriteFile("haproxy/haproxy.cfg", []byte(cfg), 0644); err != nil {
-		return err
+		return fmt.Errorf("failed to write config: %w", err)
 	}
 
 	// check if config is valid
@@ -264,10 +264,10 @@ func GenerateProxyConfig(s t.Server) error {
 		if len(currentCfg) > 0 {
 			// rollback config
 			if err := os.WriteFile("haproxy/haproxy.cfg", []byte(currentCfg), 0644); err != nil {
-				return err
+				return fmt.Errorf("failed to rollback config: %w", err)
 			}
 		}
-		return err
+		return fmt.Errorf("config is invalid: %w", err)
 	}
 
 	app.Proxy.Start()
