@@ -42,6 +42,12 @@ type Frontend struct {
 	HttpCheckPath *string `gorm:"column:http_check_path" json:"http_check_path"`
 	// Backend Http Check Expected Status
 	HttpCheckExpectStatus *int `gorm:"column:http_check_expect_status" json:"http_check_expect_status"`
+	// Backend Http Check Interval in seconds
+	HttpCheckInterval *int `gorm:"column:http_check_interval" json:"http_check_interval"`
+	// Backend Http Check Fail after X requests
+	HttpCheckFailAfter *int `gorm:"column:http_check_fail_after" json:"http_check_fail_after"`
+	// Backend Http Check Recover after X requests
+	HttpCheckRecoverAfter *int `gorm:"column:http_check_recover_after" json:"http_check_recover_after"`
 
 	Backends []Backend `json:"backends"`
 	Aliases  []Alias   `json:"aliases"`

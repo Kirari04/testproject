@@ -33,6 +33,9 @@ type CreateProxyHandler struct {
 		HttpCheckMethod       *string `json:"http_check_method"`
 		HttpCheckPath         *string `json:"http_check_path"`
 		HttpCheckExpectStatus *int    `json:"http_check_expect_status"`
+		HttpCheckInterval     *int    `json:"http_check_interval"`
+		HttpCheckFailAfter    *int    `json:"http_check_fail_after"`
+		HttpCheckRecoverAfter *int    `json:"http_check_recover_after"`
 		Backends              []struct {
 			Address string `json:"address"`
 		}
@@ -79,6 +82,9 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 		HttpCheckMethod:       h.values.HttpCheckMethod,
 		HttpCheckPath:         h.values.HttpCheckPath,
 		HttpCheckExpectStatus: h.values.HttpCheckExpectStatus,
+		HttpCheckInterval:     h.values.HttpCheckInterval,
+		HttpCheckFailAfter:    h.values.HttpCheckFailAfter,
+		HttpCheckRecoverAfter: h.values.HttpCheckRecoverAfter,
 	}
 	if err := tx.Create(&frontend).Error; err != nil {
 		tx.Rollback()

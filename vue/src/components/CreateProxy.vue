@@ -50,6 +50,9 @@ const httpCheck = ref(false)
 const httpCheckMethod = ref('GET')
 const httpCheckPath = ref('/')
 const httpCheckExpectStatus = ref(200)
+const httpCheckInterval = ref(1)
+const httpCheckFailAfter = ref(5)
+const httpCheckRecoverAfter = ref(2)
 
 const backends = ref<{ addr: string }[]>([{ addr: '' }])
 const aliases = ref<{ domain: string }[]>([{ domain: '' }])
@@ -106,6 +109,9 @@ async function createProxy() {
         http_check_method: httpCheckMethod.value,
         http_check_path: httpCheckPath.value,
         http_check_expect_status: httpCheckExpectStatus.value,
+        http_check_interval: httpCheckInterval.value,
+        http_check_fail_after: httpCheckFailAfter.value,
+        http_check_recover_after: httpCheckRecoverAfter.value,
         backends: backends.value.map(b => ({ address: b.addr })).filter(b => b.address !== ''),
         aliases: aliases.value.map(a => ({ domain: a.domain })).filter(a => a.domain !== ''),
     })
@@ -130,6 +136,9 @@ async function createProxy() {
             httpCheckMethod.value = 'GET'
             httpCheckPath.value = '/'
             httpCheckExpectStatus.value = 200
+            httpCheckInterval.value = 1
+            httpCheckFailAfter.value = 5
+            httpCheckRecoverAfter.value = 2
             backends.value = [{ addr: '' }]
         })
         .catch(err => {
@@ -211,7 +220,8 @@ async function createProxy() {
                                     <n-space>
                                         <div>
                                             Path
-                                            <n-input v-model:value="httpCheckPath" :disabled="!httpCheck" type="text" placeholder="/" />
+                                            <n-input v-model:value="httpCheckPath" :disabled="!httpCheck" type="text"
+                                                placeholder="/" />
                                         </div>
                                     </n-space>
                                     <n-space>
@@ -225,7 +235,29 @@ async function createProxy() {
                                     <n-space>
                                         <div>
                                             Expect status
-                                            <n-input-number v-model:value="httpCheckExpectStatus" :disabled="!httpCheck" placeholder="200" />
+                                            <n-input-number v-model:value="httpCheckExpectStatus" :disabled="!httpCheck"
+                                                placeholder="200" />
+                                        </div>
+                                    </n-space>
+                                    <n-space>
+                                        <div>
+                                            Interval (seconds)
+                                            <n-input-number v-model:value="httpCheckInterval" :disabled="!httpCheck"
+                                                placeholder="1" />
+                                        </div>
+                                    </n-space>
+                                    <n-space>
+                                        <div>
+                                            Fail after {{httpCheckFailAfter}} requests
+                                            <n-input-number v-model:value="httpCheckFailAfter" :disabled="!httpCheck"
+                                                placeholder="5" />
+                                        </div>
+                                    </n-space>
+                                    <n-space>
+                                        <div>
+                                            Recover after {{ httpCheckRecoverAfter }} requests
+                                            <n-input-number v-model:value="httpCheckRecoverAfter" :disabled="!httpCheck"
+                                                placeholder="2" />
                                         </div>
                                     </n-space>
                                 </n-space>

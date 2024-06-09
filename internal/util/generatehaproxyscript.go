@@ -1,18 +1,13 @@
 package util
 
 import (
-	"bytes"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
-	"os/exec"
-	"strings"
 	"testproject/internal/app"
 	"testproject/internal/m"
 	"testproject/internal/t"
 
-	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
 
@@ -210,8 +205,21 @@ func GenerateProxyConfig(s t.Server) error {
 					backendCfg += " verify required ca-file ca-certificates.crt"
 				}
 			}
-			// health check
-			backendCfg += " check  inter 2s  fall 5  rise 1"
+			if frontend.HttpCheck != nil &&
+				frontend.HttpCheckMethod != nil &&
+				frontend.HttpCheckPath != nil &&
+				frontend.HttpCheckExpectStatus != nil &&
+				frontend.HttpCheckInterval != nil &&
+				frontend.HttpCheckFailAfter != nil &&
+				frontend.HttpCheckRecoverAfter != nil &&
+				*frontend.HttpCheck {
+				// health check
+				backendCfg += fmt.Sprintf(" check inter %ds fall %d rise %d",
+					*frontend.HttpCheckInterval,
+					*frontend.HttpCheckFailAfter,
+					*frontend.HttpCheckRecoverAfter,
+				)
+			}
 			// backendCfg += fmt.Sprintf("\n  server %s %s", serverName, backend.Address)
 		}
 	}
@@ -241,20 +249,12 @@ func GenerateProxyConfig(s t.Server) error {
 	}
 
 	// check if config is valid
-	cmd := exec.Command("haproxy", "-c", "-V", "-f", "haproxy/haproxy.cfg")
-	var stdOut, stdErr bytes.Buffer
-	cmd.Stdout = &stdOut
-	cmd.Stderr = &stdErr
-
-	cmd.Run()
-	cmd.Wait()
-
-	if !strings.HasPrefix(strings.TrimSpace(stdOut.String()), "Configuration file is valid") {
+	if err := TestHaproxyConfig(); err != nil {
 		// rollback config
 		if err := os.WriteFile("haproxy/haproxy.cfg", []byte(currentCfg), 0644); err != nil {
 			return err
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("config Failure [%s] - {%s}", stdOut.String(), stdErr.String()))
+		return err
 	}
 
 	app.Proxy.Start()
