@@ -240,18 +240,20 @@ func GenerateProxyConfig(s t.Server) error {
 
 	// assemble config
 	cfg := defaultsCfg + peersCfg + frontendCfg + backendCfg + "\n"
-	app.Proxy.Stop()
+	if app.Proxy.IsRunning() {
+		app.Proxy.Stop()
+	}
 
 	// get current config
-	file, err := os.Open("haproxy/haproxy.cfg")
-	if err != nil {
-		return err
+	var currentCfg []byte
+	if file, err := os.Open("haproxy/haproxy.cfg"); err == nil {
+		defer file.Close()
+		currentCfg, err = io.ReadAll(file)
+		if err != nil {
+			return err
+		}
 	}
-	defer file.Close()
-	currentCfg, err := io.ReadAll(file)
-	if err != nil {
-		return err
-	}
+
 	// write config
 	if err := os.WriteFile("haproxy/haproxy.cfg", []byte(cfg), 0644); err != nil {
 		return err
@@ -259,9 +261,11 @@ func GenerateProxyConfig(s t.Server) error {
 
 	// check if config is valid
 	if err := TestHaproxyConfig(); err != nil {
-		// rollback config
-		if err := os.WriteFile("haproxy/haproxy.cfg", []byte(currentCfg), 0644); err != nil {
-			return err
+		if len(currentCfg) > 0 {
+			// rollback config
+			if err := os.WriteFile("haproxy/haproxy.cfg", []byte(currentCfg), 0644); err != nil {
+				return err
+			}
 		}
 		return err
 	}
