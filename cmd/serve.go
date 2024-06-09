@@ -22,15 +22,19 @@ func serve(c *cli.Context) error {
 		useTls = true
 	}
 
+	doingExit := false
 	// Start server
 	go func() {
 		if err := s.Start(useTls); err != nil {
-			log.Error().Err(err).Msg("failed to start server")
+			if !doingExit {
+				log.Error().Err(err).Msg("failed to start server")
+			}
 		}
 	}()
 
 	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
 	<-ctx.Done()
+	doingExit = true
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
