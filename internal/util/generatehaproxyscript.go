@@ -90,6 +90,7 @@ func GenerateProxyConfig(s t.Server) error {
 		}
 		for _, frontend := range frontends {
 			aclFrontendName := fmt.Sprintf("ACL_%d", frontend.ID)
+			aclFrontendRequestBodyLimitName := fmt.Sprintf("ACL_REQUEST_BODY_LIMIT_%d", frontend.ID)
 			bwLimitInName := fmt.Sprintf("bwlimit_in_%d", frontend.ID)
 			bwLimitOutName := fmt.Sprintf("bwlimit_out_%d", frontend.ID)
 			stickTableInName := "peerscfg/stick_in"
@@ -150,9 +151,17 @@ func GenerateProxyConfig(s t.Server) error {
 							frontend.ID,
 							frontend.DefRateLimit,
 						)
-
 			}
-
+			// add request body limit
+			if frontend.DefRequestBodyLimit > 0 {
+				bodyLimit := frontend.DefRequestBodyLimit * frontend.DefRequestBodyLimitUnit
+				frontendCfg += fmt.Sprintf("\n  acl %s req.body_size gt %d", aclFrontendRequestBodyLimitName, bodyLimit)
+				frontendCfg += fmt.Sprintf(
+					"\n  http-request deny deny_status 413 if %s %s",
+					aclFrontendName,
+					aclFrontendRequestBodyLimitName,
+				)
+			}
 		}
 		// add backends based on acls
 		for _, frontend := range frontends {

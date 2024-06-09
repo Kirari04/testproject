@@ -10,6 +10,7 @@ import axios from 'axios';
 import { useToast } from 'vue-toastification';
 import { useStore } from '@/stores/store';
 import ToastDesc from '@/components/ToastDesc.vue'
+import { request } from 'node_modules/axios/index.cjs';
 
 function renderIcon(icon: Component) {
     return () => h(NIcon, null, { default: () => h(icon) })
@@ -53,6 +54,9 @@ const httpCheckExpectStatus = ref(200)
 const httpCheckInterval = ref(1)
 const httpCheckFailAfter = ref(5)
 const httpCheckRecoverAfter = ref(2)
+
+const requestBodyLimit = ref(0)
+const requestBodyLimitUnit = ref(1 * 1024 * 1024)
 
 const backends = ref<{ addr: string }[]>([{ addr: '' }])
 const aliases = ref<{ domain: string }[]>([{ domain: '' }])
@@ -112,6 +116,8 @@ async function createProxy() {
         http_check_interval: httpCheckInterval.value,
         http_check_fail_after: httpCheckFailAfter.value,
         http_check_recover_after: httpCheckRecoverAfter.value,
+        request_body_limit: requestBodyLimit.value,
+        request_body_limit_unit: requestBodyLimitUnit.value,
         backends: backends.value.map(b => ({ address: b.addr })).filter(b => b.address !== ''),
         aliases: aliases.value.map(a => ({ domain: a.domain })).filter(a => a.domain !== ''),
     })
@@ -139,7 +145,10 @@ async function createProxy() {
             httpCheckInterval.value = 1
             httpCheckFailAfter.value = 5
             httpCheckRecoverAfter.value = 2
+            requestBodyLimit.value = 0
+            requestBodyLimitUnit.value = 1 * 1024 * 1024
             backends.value = [{ addr: '' }]
+            aliases.value = [{ domain: '' }]
         })
         .catch(err => {
             useToast().error(
@@ -341,6 +350,28 @@ async function createProxy() {
                                     <div>
                                         Period (seconds)
                                         <n-input-number v-model:value="hardRatePeriod" placeholder="0" />
+                                    </div>
+                                </n-space>
+                            </n-card>
+                        </n-space>
+                    </n-tab-pane>
+                    <n-tab-pane name="other-limits" tab="Other Limits">
+                        <n-space vertical>
+                            <n-alert type="info">
+                                If the limit is 0, the Body limit won't be applied. <br>
+                            </n-alert>
+                            <n-card>
+                                <h3>Request Body Limit</h3>
+                                <n-space>
+                                    <div>
+                                        Limit
+                                        <n-input-number v-model:value="requestBodyLimit" placeholder="0" />
+                                    </div>
+                                    <div>
+                                        Unit
+                                        <n-select v-model:value="requestBodyLimitUnit"
+                                            :options="bwUnits.map(u => ({ label: u.label, value: u.value }))"
+                                            style="min-width: 130px;" />
                                     </div>
                                 </n-space>
                             </n-card>

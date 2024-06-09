@@ -36,7 +36,11 @@ type CreateProxyHandler struct {
 		HttpCheckInterval     *int    `json:"http_check_interval"`
 		HttpCheckFailAfter    *int    `json:"http_check_fail_after"`
 		HttpCheckRecoverAfter *int    `json:"http_check_recover_after"`
-		Backends              []struct {
+
+		RequestBodyLimit     uint `json:"request_body_limit"`
+		RequestBodyLimitUnit uint `json:"request_body_limit_unit"`
+
+		Backends []struct {
 			Address string `json:"address"`
 		}
 		Aliases []struct {
@@ -77,6 +81,9 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 		DefRatePeriod:     h.values.RatePeriod,
 		DefHardRateLimit:  h.values.HardRateLimit,
 		DefHardRatePeriod: h.values.HardRatePeriod,
+
+		DefRequestBodyLimit:     h.values.RequestBodyLimit,
+		DefRequestBodyLimitUnit: h.values.RequestBodyLimitUnit,
 
 		HttpCheck:             h.values.HttpCheck,
 		HttpCheckMethod:       h.values.HttpCheckMethod,

@@ -49,6 +49,11 @@ type Frontend struct {
 	// Backend Http Check Recover after X requests
 	HttpCheckRecoverAfter *int `gorm:"column:http_check_recover_after" json:"http_check_recover_after"`
 
+	// Default Request Body Limit
+	DefRequestBodyLimit uint `gorm:"column:request_body_limit" json:"request_body_limit"`
+	// Default Request Body Limit Unit
+	DefRequestBodyLimitUnit uint `gorm:"column:request_body_limit_unit" json:"request_body_limit_unit"`
+
 	Backends []Backend `json:"backends"`
 	Aliases  []Alias   `json:"aliases"`
 }
