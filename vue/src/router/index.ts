@@ -14,6 +14,11 @@ const router = createRouter({
       component: () => import('../views/HttpProxyView.vue')
     },
     {
+      path: '/certificates',
+      name: 'certificates',
+      component: () => import('../views/CertificatesView.vue')
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue')

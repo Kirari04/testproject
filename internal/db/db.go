@@ -809,6 +809,37 @@ func Connect() (*gorm.DB, error) {
 				return nil
 			},
 		},
+		{
+			ID: "14",
+			Migrate: func(tx *gorm.DB) error {
+				type Certificate struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Name    string `gorm:"column:name" json:"name"`
+					PemPath string `gorm:"column:pem_path" json:"pem_path"`
+				}
+				if err := tx.Migrator().CreateTable(&Certificate{}); err != nil {
+					return err
+				}
+				return nil
+			},
+			Rollback: func(tx *gorm.DB) error {
+				type Certificate struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Name    string `gorm:"column:name" json:"name"`
+					PemPath string `gorm:"column:pem_path" json:"pem_path"`
+				}
+				if err := tx.Migrator().DropTable(&Certificate{}); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
 	})
 
 	log.Info().Msg("Migration database")

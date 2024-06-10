@@ -25,6 +25,7 @@ require (
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
