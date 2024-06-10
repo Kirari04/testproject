@@ -12,7 +12,6 @@ func (s *Server) Routes() error {
 	})
 	s.e.Static("/assets/*", "dist/assets")
 
-	s.e.GET("/api/test", handler.Test)
 	s.e.GET("/api/start", handler.NewStartHandler(s).Route)
 	s.e.GET("/api/stop", handler.NewStopHandler(s).Route)
 	s.e.GET("/api/status", handler.Status)
