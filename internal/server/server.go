@@ -86,8 +86,8 @@ func NewServer() *Server {
 func (s *Server) Start(tls bool) error {
 	if tls {
 		// generate self-signed certs if not exists
-		_, err1 := os.Stat(fmt.Sprintf("%s/certs/server.crt", s.env.WorkDir))
-		_, err2 := os.Stat(fmt.Sprintf("%s/certs/server.key", s.env.WorkDir))
+		_, err1 := os.Stat(fmt.Sprintf("%s/panel.crt", s.env.WorkDir))
+		_, err2 := os.Stat(fmt.Sprintf("%s/panel.key", s.env.WorkDir))
 		if os.IsNotExist(err1) || os.IsNotExist(err2) {
 			host := "localhost"
 			validFrom := ""
@@ -101,18 +101,18 @@ func (s *Server) Start(tls bool) error {
 			if err != nil {
 				return err
 			}
-			if err := os.WriteFile(fmt.Sprintf("%s/certs/server.crt", s.env.WorkDir), []byte(cert), 0644); err != nil {
+			if err := os.WriteFile(fmt.Sprintf("%s/panel.crt", s.env.WorkDir), []byte(cert), 0644); err != nil {
 				return err
 			}
-			if err := os.WriteFile(fmt.Sprintf("%s/certs/server.key", s.env.WorkDir), []byte(key), 0644); err != nil {
+			if err := os.WriteFile(fmt.Sprintf("%s/panel.key", s.env.WorkDir), []byte(key), 0644); err != nil {
 				return err
 			}
 		}
 		log.Info().Msgf("Server listening on https://%s", s.ENV().Addr)
 		return s.e.StartTLS(
 			s.ENV().Addr,
-			fmt.Sprintf("%s/certs/server.crt", s.env.WorkDir),
-			fmt.Sprintf("%s/certs/server.key", s.env.WorkDir),
+			fmt.Sprintf("%s/panel.crt", s.env.WorkDir),
+			fmt.Sprintf("%s/panel.key", s.env.WorkDir),
 		)
 	} else {
 		log.Info().Msgf("Server listening on http://%s", s.ENV().Addr)
