@@ -4,6 +4,8 @@
 
 A simple haproxy manager written in ~~python~~ go.
 
+> This project is still in development and not ready for production use.
+
 ## About
 
 Haproxy Manager is a simple admin panel written in go and vue for haproxy. <br>
