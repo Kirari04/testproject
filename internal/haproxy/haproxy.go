@@ -21,19 +21,67 @@ type Haproxy struct {
 type HaproxyInternal struct {
 	isRunning bool
 	Cmd       *exec.Cmd
+	stdErr    bytes.Buffer
+	stdOut    bytes.Buffer
 
 	sync.Mutex
 }
 
 func NewHaproxy(s t.Server) *Haproxy {
-	return &Haproxy{
+	h := &Haproxy{
 		i: HaproxyInternal{
 			isRunning: false,
 			Cmd:       nil,
+			stdErr:    bytes.Buffer{},
+			stdOut:    bytes.Buffer{},
 		},
 		stopChan: make(chan bool),
 		s:        s,
 	}
+	// output logs
+	go func() {
+		tx := s.DB()
+		for {
+			msg, err := h.i.stdErr.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					time.Sleep(time.Second * 1)
+					continue
+				}
+				log.Error().Err(err).Msg("failed to read haproxy stderr")
+				return
+			}
+			if msg != "" {
+				if err := tx.Create(&m.HaproxyLog{
+					Data: msg,
+				}).Error; err != nil {
+					log.Error().Err(err).Msg("failed to save haproxy log")
+				}
+			}
+		}
+	}()
+	go func() {
+		tx := s.DB()
+		for {
+			msg, err := h.i.stdOut.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					time.Sleep(time.Second * 1)
+					continue
+				}
+				log.Error().Err(err).Msg("failed to read haproxy stdout")
+				return
+			}
+			if msg != "" {
+				if err := tx.Create(&m.HaproxyLog{
+					Data: msg,
+				}).Error; err != nil {
+					log.Error().Err(err).Msg("failed to save haproxy log")
+				}
+			}
+		}
+	}()
+	return h
 }
 
 func (h *Haproxy) Start() {
@@ -44,14 +92,13 @@ func (h *Haproxy) Start() {
 	}
 
 	h.i.Cmd = exec.Command("haproxy", "-f", "./haproxy/haproxy.cfg")
-	var stdOut, stdErr bytes.Buffer
-	h.i.Cmd.Stdout = &stdOut
-	h.i.Cmd.Stderr = &stdErr
+	h.i.Cmd.Stdout = &h.i.stdOut
+	h.i.Cmd.Stderr = &h.i.stdErr
 
 	log.Info().Msg("haproxy is starting")
 	if err := h.i.Cmd.Start(); err != nil {
 		log.Error().Err(err).
-			Str("stdout", stdOut.String()).Str("stderr", stdErr.String()).
+			Str("stdout", h.i.stdOut.String()).Str("stderr", h.i.stdErr.String()).
 			Msg("failed to start haproxy")
 	}
 
@@ -76,57 +123,6 @@ func (h *Haproxy) Start() {
 
 	h.i.Unlock()
 
-	// output logs
-	go func() {
-		tx := h.s.DB()
-		for {
-			if !h.IsRunning() {
-				log.Debug().Msg("stop tracking haproxy stderr")
-				return
-			}
-			msg, err := stdErr.ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					time.Sleep(time.Second * 1)
-					continue
-				}
-				log.Error().Err(err).Msg("failed to read haproxy stderr")
-				return
-			}
-			if msg != "" {
-				if err := tx.Create(&m.HaproxyLog{
-					Data: msg,
-				}).Error; err != nil {
-					log.Error().Err(err).Msg("failed to save haproxy log")
-				}
-			}
-		}
-	}()
-	go func() {
-		tx := h.s.DB()
-		for {
-			if !h.IsRunning() {
-				log.Debug().Msg("stop tracking haproxy stdout")
-				return
-			}
-			msg, err := stdOut.ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					time.Sleep(time.Second * 1)
-					continue
-				}
-				log.Error().Err(err).Msg("failed to read haproxy stdout")
-				return
-			}
-			if msg != "" {
-				if err := tx.Create(&m.HaproxyLog{
-					Data: msg,
-				}).Error; err != nil {
-					log.Error().Err(err).Msg("failed to save haproxy log")
-				}
-			}
-		}
-	}()
 	// listen for exit
 	go func() {
 		err := h.i.Cmd.Wait()

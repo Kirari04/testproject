@@ -50,6 +50,7 @@ func GenerateProxyConfig(s t.Server) error {
 		"\n  http-request use-service prometheus-exporter if { path /metrics }" +
 		"\n  no log"
 
+	// frontend config
 	var ports []int
 	if err := tx.Model(&m.Frontend{}).Group("port").Pluck("port", &ports).Error; err != nil {
 		tx.Rollback()
@@ -175,6 +176,7 @@ func GenerateProxyConfig(s t.Server) error {
 
 	}
 
+	// backend config
 	backendCfg := ``
 	var frontends []m.Frontend
 	if err := tx.Model(&m.Frontend{}).
