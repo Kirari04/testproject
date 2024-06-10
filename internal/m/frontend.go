@@ -9,6 +9,8 @@ type Frontend struct {
 
 	// This is the Port on what the frontend is listening
 	Port int `gorm:"column:port" json:"port"`
+	// Is set to true if the frontend is listening on https
+	Https bool `gorm:"column:https" json:"https"`
 	// This is the Domain on what the Access Rule will be based on
 	Domain string `gorm:"column:domain" json:"domain"`
 

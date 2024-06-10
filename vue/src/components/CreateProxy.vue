@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { NCard, useLoadingBar, NSpace, NInput, NInputNumber, NButton, NIcon, NTabs, NTabPane, NSelect, NModal, NAlert, NSwitch } from 'naive-ui'
-import { onMounted, ref, h } from 'vue'
+import { NCard, useLoadingBar, NSpace, NInput, NInputNumber, NButton, NIcon, NTabs, NTabPane, NSelect, NModal, NAlert, NSwitch, NFlex } from 'naive-ui'
+import { onMounted, ref, h, watch } from 'vue'
 import { type Component } from 'vue'
 import {
     AddRound,
@@ -9,6 +9,7 @@ import {
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 import ToastDesc from '@/components/ToastDesc.vue'
+import type { Certificate } from 'env';
 
 function renderIcon(icon: Component) {
     return () => h(NIcon, null, { default: () => h(icon) })
@@ -30,6 +31,7 @@ const emit = defineEmits<{
 const showModal = ref(false)
 
 const port = ref(80)
+const https = ref(false)
 const domain = ref('')
 const bwInLimit = ref(0)
 const bwInLimitUnit = ref(1 * 1024 * 1024)
@@ -42,8 +44,8 @@ const ratePeriod = ref(1)
 const hardRateLimit = ref(0)
 const hardRatePeriod = ref(1)
 
-const https = ref(false)
-const httpsVerify = ref(false)
+const backendHttps = ref(false)
+const backendHttpsVerify = ref(false)
 
 const httpCheck = ref(false)
 const httpCheckMethod = ref('GET')
@@ -58,6 +60,16 @@ const requestBodyLimitUnit = ref(1 * 1024 * 1024)
 
 const backends = ref<{ addr: string }[]>([{ addr: '' }])
 const aliases = ref<{ domain: string }[]>([{ domain: '' }])
+
+watch(https, async () => {
+    if (https.value) {
+        port.value = 443
+    } else {
+        if (port.value === 443) {
+            port.value = 80
+        }
+    }
+})
 
 const bwUnits = [{
     label: 'Bytes',
@@ -94,6 +106,7 @@ async function createProxy() {
     loadingBar.start()
     await axios.post<string>(`${import.meta.env.VITE_APP_API}/api/proxy`, {
         port: port.value,
+        https: https.value,
         domain: domain.value,
         bw_in_limit: bwInLimit.value,
         bw_in_limit_unit: bwInLimitUnit.value,
@@ -105,8 +118,8 @@ async function createProxy() {
         rate_period: ratePeriod.value,
         hard_rate_limit: hardRateLimit.value,
         hard_rate_period: hardRatePeriod.value,
-        https: https.value,
-        https_verify: httpsVerify.value,
+        backend_https: backendHttps.value,
+        backend_https_verify: backendHttpsVerify.value,
         http_check: httpCheck.value,
         http_check_method: httpCheckMethod.value,
         http_check_path: httpCheckPath.value,
@@ -134,8 +147,8 @@ async function createProxy() {
             bwOutPeriod.value = 1
             rateLimit.value = 0
             ratePeriod.value = 1
-            https.value = false
-            httpsVerify.value = false
+            backendHttps.value = false
+            backendHttpsVerify.value = false
             httpCheck.value = false
             httpCheckMethod.value = 'GET'
             httpCheckPath.value = '/'
@@ -172,6 +185,16 @@ async function createProxy() {
                     <n-tab-pane name="details" tab="Details">
                         <n-space vertical>
                             <n-card>
+                                <h3>Listen on :{{ port }}</h3>
+                                <n-space vertical>
+                                    <n-flex align="center" justify="start">
+                                        Use HTTPS
+                                        <n-switch v-model:value="https" />
+                                    </n-flex>
+                                    <n-space>
+                                        <n-input-number v-model:value="port" placeholder="80" />
+                                    </n-space>
+                                </n-space>
                                 <h3>Domain</h3>
                                 <n-space>
                                     <n-input v-model:value="domain" type="text" placeholder="example.com" />
@@ -190,17 +213,13 @@ async function createProxy() {
                                 </n-space>
                             </n-card>
                             <n-card>
-                                <h3>Listen on :{{ port }}</h3>
-                                <n-space>
-                                    <n-input-number v-model:value="port" placeholder="80" />
-                                </n-space>
                                 <h3>Backends</h3>
                                 <n-space vertical>
                                     <n-space>
                                         Use HTTPS
-                                        <n-switch v-model:value="https" />
+                                        <n-switch v-model:value="backendHttps" />
                                         HTTPS Verify Certificate
-                                        <n-switch v-model:value="httpsVerify" :disabled="!https" />
+                                        <n-switch v-model:value="backendHttpsVerify" :disabled="!backendHttps" />
                                     </n-space>
                                     <n-space v-for="(backend, i) in backends" :key="i">
                                         <n-input v-model:value="backend.addr" type="text"
@@ -255,7 +274,7 @@ async function createProxy() {
                                     </n-space>
                                     <n-space>
                                         <div>
-                                            Fail after {{httpCheckFailAfter}} requests
+                                            Fail after {{ httpCheckFailAfter }} requests
                                             <n-input-number v-model:value="httpCheckFailAfter" :disabled="!httpCheck"
                                                 placeholder="5" />
                                         </div>

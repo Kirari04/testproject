@@ -19,7 +19,10 @@ func NewGetProxiesHandler(s t.Server) *GetProxiesHandler {
 func (h *GetProxiesHandler) Route(c echo.Context) error {
 	tx := h.s.DB()
 	res := make([]m.Frontend, 0)
-	if err := tx.Model(&m.Frontend{}).Preload("Backends").Preload("Aliases").Find(&res).Error; err != nil {
+	if err := tx.Model(&m.Frontend{}).
+		Preload("Backends").
+		Preload("Aliases").
+		Find(&res).Error; err != nil {
 		return err
 	}
 

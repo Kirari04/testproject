@@ -7,6 +7,23 @@ export interface Frontend {
   interface: string
   port: number
   domain: string
+  https: boolean
+  bw_limit: number
+  bw_limit_unit: number
+  bw_period: number
+  rate_limit: number
+  rate_period: number
+  hard_rate_limit: number
+  hard_rate_period: number
+  http_check: boolean
+  http_check_method: string
+  http_check_path: string
+  http_check_expect_status: number
+  http_check_interval: number
+  http_check_fail_after: number
+  http_check_recover_after: number
+  request_body_limit: number
+  request_body_limit_unit: number
   backends: Backend[]
   aliases: Alias[]
 }

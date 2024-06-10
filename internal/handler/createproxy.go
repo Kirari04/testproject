@@ -1,18 +1,21 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"testproject/internal/m"
 	"testproject/internal/t"
 	"testproject/internal/util"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type CreateProxyHandler struct {
 	s      t.Server
 	values struct {
 		Port   int    `json:"port"`
+		Https  *bool  `json:"https"`
 		Domain string `json:"domain"`
 
 		BwInLimit      uint `json:"bw_in_limit"`
@@ -26,8 +29,8 @@ type CreateProxyHandler struct {
 		HardRateLimit  uint `json:"hard_rate_limit"`
 		HardRatePeriod uint `json:"hard_rate_period"`
 
-		Https       *bool `json:"https"`
-		HttpsVerify *bool `json:"https_verify"`
+		BackendHttps       *bool `json:"backend_https"`
+		BackendHttpsVerify *bool `json:"backend_https_verify"`
 
 		HttpCheck             *bool   `json:"http_check"`
 		HttpCheckMethod       *string `json:"http_check_method"`
@@ -57,18 +60,36 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 	if err := c.Bind(&h.values); err != nil {
 		return err
 	}
+	backendHttps := false
+	if h.values.BackendHttps != nil {
+		backendHttps = *h.values.BackendHttps
+	}
+	backendHttpsVerify := false
+	if h.values.BackendHttpsVerify != nil {
+		backendHttpsVerify = *h.values.BackendHttpsVerify
+	}
+
 	https := false
 	if h.values.Https != nil {
 		https = *h.values.Https
 	}
-	httpsVerify := false
-	if h.values.HttpsVerify != nil {
-		httpsVerify = *h.values.HttpsVerify
+	if https {
+		// check if other frontends with the same port are listening on https
+		var frontends []m.Frontend
+		if err := h.s.DB().Where(&m.Frontend{Port: h.values.Port}).Find(&frontends).Error; err != nil {
+			return fmt.Errorf("failed to get frontends from database: %w", err)
+		}
+		for _, frontend := range frontends {
+			if !frontend.Https {
+				return c.String(http.StatusBadRequest, "This port is already in use with a non-https frontend")
+			}
+		}
 	}
 
 	tx := h.s.DB().Begin()
 	frontend := m.Frontend{
 		Port:   h.values.Port,
+		Https:  https,
 		Domain: h.values.Domain,
 
 		DefBwInLimit:      h.values.BwInLimit,
@@ -103,8 +124,8 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 			FrontendID: frontend.ID,
 			Address:    backendRaw.Address,
 
-			Https:       https,
-			HttpsVerify: httpsVerify,
+			Https:       backendHttps,
+			HttpsVerify: backendHttpsVerify,
 		}
 		if err := tx.Create(&backend).Error; err != nil {
 			tx.Rollback()
@@ -128,7 +149,8 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 	}
 
 	if err := util.GenerateProxyConfig(h.s); err != nil {
-		return err
+		log.Error().Err(err).Msg("Failed to generate proxy config")
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to generate proxy config: Check logs for more information")
 	}
 
 	return c.String(http.StatusOK, "ok")

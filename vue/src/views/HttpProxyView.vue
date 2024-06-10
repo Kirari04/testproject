@@ -160,14 +160,14 @@ const statuses: ProxyStatus[] = [
 						<td>
 							<ul>
 								<li>
-									<a :href="`http://${pr.domain}:${pr.port}`" target="_blank"
-										rel="noopener noreferrer">
+									<a :href="`${pr.https ? 'https' : 'http'}://${pr.domain}:${pr.port}`"
+										target="_blank" rel="noopener noreferrer">
 										{{ pr.domain }}
 									</a>
 								</li>
 								<li v-for="alias in pr.aliases">
-									<a :href="`http://${alias.domain}:${pr.port}`" target="_blank"
-										rel="noopener noreferrer">
+									<a :href="`${pr.https ? 'https' : 'http'}://${alias.domain}:${pr.port}`"
+										target="_blank" rel="noopener noreferrer">
 										{{ alias.domain }}
 									</a>
 								</li>

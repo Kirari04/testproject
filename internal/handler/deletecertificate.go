@@ -6,6 +6,7 @@ import (
 	"os"
 	"testproject/internal/m"
 	"testproject/internal/t"
+	"testproject/internal/util"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -48,6 +49,11 @@ func (h *DeleteCertificateHandler) Route(c echo.Context) error {
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	if err := util.GenerateProxyConfig(h.s); err != nil {
+		log.Error().Err(err).Msg("Failed to generate proxy config")
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to generate proxy config: Check logs for more information")
 	}
 
 	return c.String(http.StatusOK, "ok")

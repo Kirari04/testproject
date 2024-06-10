@@ -7,6 +7,7 @@ import (
 	"testproject/internal/util"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type DeleteProxyHandler struct {
@@ -40,7 +41,8 @@ func (h *DeleteProxyHandler) Route(c echo.Context) error {
 
 	// reload haproxy
 	if err := util.GenerateProxyConfig(h.s); err != nil {
-		return err
+		log.Error().Err(err).Msg("Failed to generate proxy config")
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to generate proxy config: Check logs for more information")
 	}
 
 	return c.String(http.StatusOK, "ok")

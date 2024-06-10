@@ -68,9 +68,14 @@ func GenerateProxyConfig(s t.Server) error {
 		}
 		frontendName := frontendName(port)
 		// add port listener
-		frontendCfg += fmt.Sprintf("\n\nfrontend %s\n  mode http\n  bind :%d\n  timeout client 1m",
-			frontendName, port,
+		frontendCfg += fmt.Sprintf("\n\nfrontend %s\n  mode http\n  timeout client 1m",
+			frontendName,
 		)
+		if frontends[0].Https {
+			frontendCfg += fmt.Sprintf("\n  bind :%d ssl crt %s/certs/", port, s.ENV().WorkDir)
+		} else {
+			frontendCfg += fmt.Sprintf("\n  bind :%d", port)
+		}
 
 		// match domains with acls to backends
 		for _, frontend := range frontends {
@@ -262,7 +267,7 @@ func GenerateProxyConfig(s t.Server) error {
 	}
 
 	// check if config is valid
-	if err := TestHaproxyConfig(); err != nil {
+	if err := TestHaproxyConfig(s.DB()); err != nil {
 		if len(currentCfg) > 0 {
 			// rollback config
 			if err := os.WriteFile("haproxy/haproxy.cfg", []byte(currentCfg), 0644); err != nil {
