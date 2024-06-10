@@ -2,13 +2,14 @@
 import { h, ref, watch } from 'vue'
 import { type Component } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
-import { NLayout, NLayoutSider, NIcon, NMenu, NLoadingBarProvider, NFlex, NModalProvider } from 'naive-ui'
+import { NLayout, NLayoutSider, NIcon, NMenu, NLoadingBarProvider, NFlex, NModalProvider, NTag } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import {
 	HomeRound,
 	InfoRound,
 	WebRound,
 	ListRound,
+	SecurityRound,
 } from '@vicons/material'
 import { useStore } from './stores/store'
 
@@ -37,6 +38,11 @@ const menuOptions: MenuOption[] = [
 		label: 'Http Proxy',
 		key: '/http-proxy',
 		icon: renderIcon(WebRound),
+	},
+	{
+		label: 'Certificates',
+		key: '/certificates',
+		icon: renderIcon(SecurityRound),
 	},
 	{
 		label: 'Log',
@@ -74,6 +80,14 @@ router.afterEach((to) => {
 			<n-layout id="app-layout" has-sider>
 				<n-layout-sider bordered collapse-mode="width" :collapsed-width="64" :width="240" :collapsed="collapsed"
 					show-trigger @collapse="collapsed = true" @expand="collapsed = false">
+					<NFlex justify="center" align="center" style="padding: 5px;">
+						<n-tag v-if="store.isProxyRunning" type="success">
+							Online
+						</n-tag>
+						<n-tag v-if="!store.isProxyRunning" type="error">
+							Offline
+						</n-tag>
+					</NFlex>
 					<n-menu v-model:value="activeKey" :collapsed="collapsed" :collapsed-width="64"
 						:collapsed-icon-size="22" :options="menuOptions" />
 				</n-layout-sider>

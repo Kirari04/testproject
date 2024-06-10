@@ -43,12 +43,6 @@ async function stopProxy() {
 	<n-card title="Home">
 		<n-space vertical>
 			<n-flex align="center">
-				<n-tag v-if="store.isProxyRunning" type="success">
-					Proxy is running
-				</n-tag>
-				<n-tag v-if="!store.isProxyRunning" type="error">
-					Proxy is off
-				</n-tag>
 				<n-button v-if="!store.isProxyRunning" @click="startProxy()" type="info">
 					Start
 				</n-button>

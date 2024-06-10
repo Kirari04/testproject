@@ -152,7 +152,7 @@ async function createProxy() {
             useToast().error(
                 h(ToastDesc, {
                     title: 'Failed to create proxy',
-                    message: err.message,
+                    message: err.response.data ?? err.message,
                 }), {
                 timeout: 5000,
             })

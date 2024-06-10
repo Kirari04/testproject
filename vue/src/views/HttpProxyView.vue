@@ -136,12 +136,6 @@ const statuses: ProxyStatus[] = [
 	<n-card title="Proxies">
 		<n-space vertical>
 			<n-space>
-				<n-tag v-if="store.isProxyRunning" type="success">
-					Proxy is running
-				</n-tag>
-				<n-tag v-if="!store.isProxyRunning" type="error">
-					Proxy is off
-				</n-tag>
 				<n-button @click="reloadProxies()">Reload List</n-button>
 				<CreateProxy @onCreated="reloadProxies" />
 			</n-space>
