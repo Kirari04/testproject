@@ -16,7 +16,7 @@ import (
 type AddCertificateHandler struct {
 	s      t.Server
 	values struct {
-		Name string `json:"name"`
+		Name string `form:"name"`
 	}
 }
 
@@ -48,7 +48,7 @@ func (h *AddCertificateHandler) Route(c echo.Context) error {
 
 	if err := tx.Create(&m.Certificate{
 		Name:    h.values.Name,
-		PemPath: pemPath,
+		PemPath: pemName,
 	}).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to add certificate to database: %v", err)

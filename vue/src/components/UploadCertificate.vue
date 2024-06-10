@@ -55,6 +55,9 @@ async function addCertificate() {
             useToast().success('Certificate uploaded')
             showModal.value = false
 
+            name.value = ''
+            crfFiles.value = []
+            keyFiles.value = []
         })
         .catch(err => {
             useToast().error(

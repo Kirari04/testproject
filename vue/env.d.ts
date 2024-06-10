@@ -1,30 +1,30 @@
 /// <reference types="vite/client" />
 
 export interface Frontend {
-    id: number
-    created_at: string
-    updated_at: string
-    interface: string
-    port: number
-    domain: string
-    backends: Backend[]
-    aliases: Alias[]
+  id: number
+  created_at: string
+  updated_at: string
+  interface: string
+  port: number
+  domain: string
+  backends: Backend[]
+  aliases: Alias[]
 }
 
 export interface Backend {
-    id: number
-    created_at: string
-    updated_at: string
-    address: string
-    https: boolean
-    https_verify: boolean
+  id: number
+  created_at: string
+  updated_at: string
+  address: string
+  https: boolean
+  https_verify: boolean
 }
 
 export interface Alias {
-    id: number
-    created_at: string
-    updated_at: string
-    domain: string
+  id: number
+  created_at: string
+  updated_at: string
+  domain: string
 }
 
 
@@ -65,4 +65,12 @@ export interface HaproxyLog {
   created_at: string
   updated_at: string
   data: string
+}
+
+export interface Certificate {
+  id: number
+  created_at: string
+  updated_at: string
+  name: string
+  pem_path: string
 }
