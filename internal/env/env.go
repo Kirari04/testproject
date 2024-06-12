@@ -8,7 +8,7 @@ import (
 
 type Env struct {
 	Addr    string `env:"ADDR" envDefault:"0.0.0.0:8080"`
-	WorkDir string `env:"WORK_DIR" envDefault:"./data"`
+	WorkDir string `env:"WORK_DIR" envDefault:"./.data"`
 }
 
 func NewEnv() (*Env, error) {

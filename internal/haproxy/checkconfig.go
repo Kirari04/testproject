@@ -14,7 +14,7 @@ import (
 
 func (h *Haproxy) CheckConfig() error {
 	db := h.s.DB()
-	cmd := exec.Command("haproxy", "-c", "-V", "-f", "haproxy/haproxy.cfg")
+	cmd := exec.Command("haproxy", "-c", "-V", "-f", h.s.HaConfigPath())
 	var stdOut, stdErr bytes.Buffer
 	cmd.Stdout = &stdOut
 	cmd.Stderr = &stdErr

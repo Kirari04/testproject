@@ -1,4 +1,3 @@
 main
 tmp
-data
-haproxy/haproxy.cfg
+.data/

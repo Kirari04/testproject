@@ -8,19 +8,24 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/common v0.54.0
 	github.com/rs/zerolog v1.33.0
+	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.27.2
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.10
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/protobuf v1.34.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (

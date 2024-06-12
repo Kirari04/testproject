@@ -3,7 +3,7 @@ services:
     image: kirari04/haproxymngr:latest
     network_mode: host
     volumes:
-      - haproxymngr:/app/data
+      - haproxymngr:/app/.data
     environment:
       - ADDR=0.0.0.0:8080
 volumes:

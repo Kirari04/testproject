@@ -26,4 +26,6 @@ RUN apk add sqlite haproxy
 COPY --from=builder /app/main /app/main
 COPY --from=vue /app/dist /app/dist
 
+VOLUME [ "/app/.data" ]
+
 ENTRYPOINT ["/app/main", "serve", "--tls"]

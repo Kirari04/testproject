@@ -22,10 +22,32 @@ type Haproxy struct {
 type HaproxyInternal struct {
 	isRunning bool
 	Cmd       *exec.Cmd
-	stdErr    bytes.Buffer
-	stdOut    bytes.Buffer
-
+	stdErr    LogStdBuf
+	stdOut    LogStdBuf
 	sync.Mutex
+}
+
+type LogStdBuf struct {
+	buf bytes.Buffer
+	sync.Mutex
+}
+
+func (l *LogStdBuf) Buffer() *bytes.Buffer {
+	l.Lock()
+	defer l.Unlock()
+	return &l.buf
+}
+
+func (l *LogStdBuf) String() string {
+	l.Lock()
+	defer l.Unlock()
+	return l.buf.String()
+}
+
+func (l *LogStdBuf) ReadString(delim byte) (string, error) {
+	l.Lock()
+	defer l.Unlock()
+	return l.buf.ReadString(delim)
 }
 
 func NewHaproxy(s t.Server) *Haproxy {
@@ -33,12 +55,11 @@ func NewHaproxy(s t.Server) *Haproxy {
 		i: HaproxyInternal{
 			isRunning: false,
 			Cmd:       nil,
-			stdErr:    bytes.Buffer{},
-			stdOut:    bytes.Buffer{},
 		},
 		stopChan: make(chan bool),
 		s:        s,
 	}
+
 	// output logs
 	go func() {
 		tx := s.DB()
@@ -92,9 +113,9 @@ func (h *Haproxy) Start() {
 		return
 	}
 
-	h.i.Cmd = exec.Command("haproxy", "-f", "./haproxy/haproxy.cfg")
-	h.i.Cmd.Stdout = &h.i.stdOut
-	h.i.Cmd.Stderr = &h.i.stdErr
+	h.i.Cmd = exec.Command("haproxy", "-f", h.ConfigPath())
+	h.i.Cmd.Stdout = h.i.stdOut.Buffer()
+	h.i.Cmd.Stderr = h.i.stdErr.Buffer()
 
 	log.Info().Msg("haproxy is starting")
 	if err := h.i.Cmd.Start(); err != nil {
@@ -180,4 +201,8 @@ func (h *Haproxy) IsRunning() bool {
 	h.i.Lock()
 	defer h.i.Unlock()
 	return h.i.isRunning
+}
+
+func (h *Haproxy) ConfigPath() string {
+	return h.s.ENV().WorkDir + "/haproxy/haproxy.cfg"
 }

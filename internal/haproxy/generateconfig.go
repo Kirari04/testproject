@@ -251,7 +251,7 @@ func (h *Haproxy) GenerateConfig() error {
 
 	// get current config
 	var currentCfg []byte
-	if file, err := os.Open("haproxy/haproxy.cfg"); err == nil {
+	if file, err := os.Open(h.ConfigPath()); err == nil {
 		defer file.Close()
 		currentCfg, err = io.ReadAll(file)
 		if err != nil {
@@ -260,7 +260,7 @@ func (h *Haproxy) GenerateConfig() error {
 	}
 
 	// write config
-	if err := os.WriteFile("haproxy/haproxy.cfg", []byte(cfg), 0644); err != nil {
+	if err := os.WriteFile(h.ConfigPath(), []byte(cfg), 0644); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 
@@ -268,7 +268,7 @@ func (h *Haproxy) GenerateConfig() error {
 	if err := h.CheckConfig(); err != nil {
 		if len(currentCfg) > 0 {
 			// rollback config
-			if err := os.WriteFile("haproxy/haproxy.cfg", []byte(currentCfg), 0644); err != nil {
+			if err := os.WriteFile(h.ConfigPath(), []byte(currentCfg), 0644); err != nil {
 				return fmt.Errorf("failed to rollback config: %w", err)
 			}
 		}

@@ -16,4 +16,6 @@ type Server interface {
 	HaCheckConfig() error
 	HaGetStats() (*[]ProxyStatus, error)
 	HaKeepAlive()
+	HaStopKeepAlive()
+	HaConfigPath() string
 }

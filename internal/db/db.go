@@ -1,6 +1,7 @@
 package db
 
 import (
+	"testproject/internal/env"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
@@ -10,8 +11,8 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func Connect() (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open("./data/db.sqlite3"), &gorm.Config{
+func Connect(cfg *env.Env) (*gorm.DB, error) {
+	db, err := gorm.Open(sqlite.Open(cfg.WorkDir+"/db.sqlite3"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {

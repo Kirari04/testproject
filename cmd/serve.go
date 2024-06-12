@@ -12,7 +12,10 @@ import (
 )
 
 func serve(c *cli.Context) error {
-	s := server.NewServer()
+	s, err := server.NewServer()
+	if err != nil {
+		return err
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()

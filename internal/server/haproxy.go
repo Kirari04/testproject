@@ -29,3 +29,11 @@ func (s *Server) HaCheckConfig() error {
 func (s *Server) HaGetStats() (*[]t.ProxyStatus, error) {
 	return s.Haproxy.GetStats()
 }
+
+func (s *Server) HaStopKeepAlive() {
+	s.Haproxy.StopKeepAlive()
+}
+
+func (s *Server) HaConfigPath() string {
+	return s.Haproxy.ConfigPath()
+}

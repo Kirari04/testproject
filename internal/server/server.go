@@ -27,26 +27,21 @@ type Server struct {
 	Haproxy          *haproxy.Haproxy
 }
 
-func NewServer() *Server {
+func NewServer() (*Server, error) {
 	cfg, err := env.NewEnv()
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to load env")
+		log.Error().Err(err).Msg("failed to load env")
+		return nil, err
 	}
 
-	if err := os.MkdirAll(cfg.WorkDir, 0755); err != nil {
-		log.Fatal().Err(err).Msg("failed to create work dir")
+	if err := initDirs(cfg); err != nil {
+		return nil, err
 	}
 
-	if err := os.MkdirAll(cfg.WorkDir+"/certs", 0755); err != nil {
-		log.Fatal().Err(err).Msg("failed to create work dir certs")
-	}
-	if err := os.MkdirAll("haproxy", 0755); err != nil {
-		log.Fatal().Err(err).Msg("failed to create haproxy dir")
-	}
-
-	db, err := db.Connect()
+	db, err := db.Connect(cfg)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to connect to db")
+		log.Error().Err(err).Msg("failed to connect to db")
+		return nil, err
 	}
 
 	e := echo.New()
@@ -77,7 +72,7 @@ func NewServer() *Server {
 	s.Middleware()
 	s.Routes()
 
-	return s
+	return s, nil
 }
 
 func (s *Server) Start(tls bool) error {
@@ -132,4 +127,21 @@ func (s *Server) DB() *gorm.DB {
 
 func (s *Server) ENV() *env.Env {
 	return s.env
+}
+
+func initDirs(cfg *env.Env) error {
+	if err := os.MkdirAll(cfg.WorkDir, 0755); err != nil {
+		log.Error().Err(err).Msg("failed to create work dir")
+		return err
+	}
+
+	if err := os.MkdirAll(cfg.WorkDir+"/certs", 0755); err != nil {
+		log.Error().Err(err).Msg("failed to create work dir certs")
+		return err
+	}
+	if err := os.MkdirAll(cfg.WorkDir+"/haproxy", 0755); err != nil {
+		log.Error().Err(err).Msg("failed to create haproxy dir")
+		return err
+	}
+	return nil
 }
