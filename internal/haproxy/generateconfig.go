@@ -1,18 +1,16 @@
-package util
+package haproxy
 
 import (
 	"fmt"
 	"io"
 	"os"
-	"testproject/internal/app"
 	"testproject/internal/m"
-	"testproject/internal/t"
 
 	"github.com/rs/zerolog/log"
 )
 
-func GenerateProxyConfig(s t.Server) error {
-	tx := s.DB().Begin()
+func (h *Haproxy) GenerateConfig() error {
+	tx := h.s.DB().Begin()
 	// default config
 	defaultsCfg := "defaults" +
 		"\n  timeout client 1m" +
@@ -72,7 +70,7 @@ func GenerateProxyConfig(s t.Server) error {
 			frontendName,
 		)
 		if frontends[0].Https {
-			frontendCfg += fmt.Sprintf("\n  bind :%d ssl crt %s/certs/", port, s.ENV().WorkDir)
+			frontendCfg += fmt.Sprintf("\n  bind :%d ssl crt %s/certs/", port, h.s.ENV().WorkDir)
 		} else {
 			frontendCfg += fmt.Sprintf("\n  bind :%d", port)
 		}
@@ -247,8 +245,8 @@ func GenerateProxyConfig(s t.Server) error {
 
 	// assemble config
 	cfg := defaultsCfg + peersCfg + frontendCfg + backendCfg + "\n"
-	if app.Proxy.IsRunning() {
-		app.Proxy.Stop()
+	if h.IsRunning() {
+		h.Stop()
 	}
 
 	// get current config
@@ -267,7 +265,7 @@ func GenerateProxyConfig(s t.Server) error {
 	}
 
 	// check if config is valid
-	if err := TestHaproxyConfig(s.DB()); err != nil {
+	if err := h.CheckConfig(); err != nil {
 		if len(currentCfg) > 0 {
 			// rollback config
 			if err := os.WriteFile("haproxy/haproxy.cfg", []byte(currentCfg), 0644); err != nil {
@@ -277,8 +275,7 @@ func GenerateProxyConfig(s t.Server) error {
 		return fmt.Errorf("config is invalid: %w", err)
 	}
 
-	app.Proxy.Start()
-
+	h.Start()
 	return nil
 }
 

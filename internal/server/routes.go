@@ -14,7 +14,7 @@ func (s *Server) Routes() error {
 
 	s.e.GET("/api/start", handler.NewStartHandler(s).Route)
 	s.e.GET("/api/stop", handler.NewStopHandler(s).Route)
-	s.e.GET("/api/status", handler.Status)
+	s.e.GET("/api/status", handler.NewStatusHandler(s).Route)
 
 	s.e.GET("/api/proxies", handler.NewGetProxiesHandler(s).Route)
 	s.e.POST("/api/proxy", handler.NewCreateProxyHandler(s).Route)

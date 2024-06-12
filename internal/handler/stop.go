@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"testproject/internal/app"
 	"testproject/internal/t"
 
 	"github.com/labstack/echo/v4"
@@ -17,9 +16,9 @@ func NewStopHandler(s t.Server) *StopHandler {
 }
 
 func (h *StopHandler) Route(c echo.Context) error {
-	if !app.Proxy.IsRunning() {
+	if !h.s.HaIsRunning() {
 		return c.String(http.StatusOK, "proxy is already stopped")
 	}
-	app.Proxy.Stop()
+	h.s.HaStop()
 	return c.String(http.StatusOK, "ok")
 }

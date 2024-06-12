@@ -2,9 +2,7 @@ package handler
 
 import (
 	"net/http"
-	"testproject/internal/app"
 	"testproject/internal/t"
-	"testproject/internal/util"
 
 	"github.com/labstack/echo/v4"
 )
@@ -18,10 +16,10 @@ func NewStartHandler(s t.Server) *StartHandler {
 }
 
 func (h *StartHandler) Route(c echo.Context) error {
-	if app.Proxy.IsRunning() {
+	if h.s.HaIsRunning() {
 		return c.String(http.StatusOK, "proxy is already running")
 	}
-	if err := util.GenerateProxyConfig(h.s); err != nil {
+	if err := h.s.HaGenerateConfig(); err != nil {
 		return err
 	}
 	return c.String(http.StatusOK, "ok")

@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 	"testproject/internal/t"
-	"testproject/internal/util"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -18,7 +17,7 @@ func NewGetProxiesStatusHandler(s t.Server) *GetProxiesStatusHandler {
 }
 
 func (h *GetProxiesStatusHandler) Route(c echo.Context) error {
-	apiRes, err := util.GetHaproxyStats(h.s)
+	apiRes, err := h.s.HaGetStats()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to fetch haproxy stats")
 		return err

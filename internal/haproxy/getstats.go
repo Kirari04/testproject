@@ -1,4 +1,4 @@
-package util
+package haproxy
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"testproject/internal/app"
 	"testproject/internal/m"
 	"testproject/internal/t"
 
@@ -16,8 +15,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func GetHaproxyStats(s t.Server) (*[]t.ProxyStatus, error) {
-	if !app.Proxy.IsRunning() {
+func (h *Haproxy) GetStats() (*[]t.ProxyStatus, error) {
+	if !h.IsRunning() {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "haproxy is not running")
 	}
 
@@ -108,7 +107,7 @@ func GetHaproxyStats(s t.Server) (*[]t.ProxyStatus, error) {
 				// init proxy status server struct
 				if _, ok := data[frontendID]; !ok {
 					var dbFrontend m.Frontend
-					if err := s.DB().
+					if err := h.s.DB().
 						Model(&m.Frontend{}).
 						First(&dbFrontend, frontendID).Error; err != nil {
 						log.Error().Err(err).Int("frontend_id", frontendID).Msg("failed to fetch frontend")
@@ -119,7 +118,7 @@ func GetHaproxyStats(s t.Server) (*[]t.ProxyStatus, error) {
 				// init proxy status server struct
 				if _, ok := data[frontendID][serverID]; !ok {
 					var dbServer m.Backend
-					if err := s.DB().
+					if err := h.s.DB().
 						Model(&m.Backend{}).
 						First(&dbServer, serverID).Error; err != nil {
 						log.Error().Err(err).Msg("failed to fetch backend")

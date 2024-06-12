@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"testproject/internal/app"
-	"testproject/internal/bg"
 	"testproject/internal/db"
 	"testproject/internal/env"
 	"testproject/internal/haproxy"
@@ -26,6 +24,7 @@ type Server struct {
 	AllowCredentials bool
 	env              *env.Env
 	db               *gorm.DB
+	Haproxy          *haproxy.Haproxy
 }
 
 func NewServer() *Server {
@@ -72,18 +71,18 @@ func NewServer() *Server {
 		db:               db,
 	}
 
+	haproxy := haproxy.NewHaproxy(s)
+	s.Haproxy = haproxy
+
 	s.Middleware()
 	s.Routes()
-
-	app.Proxy = haproxy.NewHaproxy(s)
-
-	// leaking goroutines
-	go bg.KeepAliveProxy(s)
 
 	return s
 }
 
 func (s *Server) Start(tls bool) error {
+	go s.HaKeepAlive()
+
 	if tls {
 		// generate self-signed certs if not exists
 		_, err1 := os.Stat(fmt.Sprintf("%s/panel.crt", s.env.WorkDir))
@@ -123,6 +122,7 @@ func (s *Server) Start(tls bool) error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
+	s.Haproxy.StopKeepAlive()
 	return s.e.Shutdown(ctx)
 }
 

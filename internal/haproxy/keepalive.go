@@ -1,41 +1,48 @@
-package bg
+package haproxy
 
 import (
-	"testproject/internal/app"
 	"testproject/internal/m"
-	"testproject/internal/t"
 	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
-func KeepAliveProxy(s t.Server) {
-	runKeepAliveProxy(s)
+func (h *Haproxy) KeepAlive() {
+	h.keepAliveEnabled = true
+	h.runKeepAlive()
 	for {
 		time.Sleep(time.Second * 2)
-		runKeepAliveProxy(s)
+		h.runKeepAlive()
+		if !h.keepAliveEnabled {
+			log.Info().Msg("keepalive stopped")
+			break
+		}
 	}
 }
 
-func runKeepAliveProxy(s t.Server) {
-	tx := s.DB()
+func (h *Haproxy) StopKeepAlive() {
+	// stop keepalive
+	h.keepAliveEnabled = false
+}
+
+func (h *Haproxy) runKeepAlive() {
+	tx := h.s.DB()
 	var setting m.Setting
 	if err := tx.First(&setting).Error; err != nil {
 		log.Error().Err(err).Msg("failed to get setting inside keepalive")
 		return
 	}
-
-	if app.Proxy.IsRunning() != setting.ShouldProxyRun {
+	if h.IsRunning() != setting.ShouldProxyRun {
 		log.Info().
-			Bool("IsRunning", app.Proxy.IsRunning()).
+			Bool("IsRunning", h.IsRunning()).
 			Bool("ShouldBeRunning", setting.ShouldProxyRun).
 			Msg("keepalive proxy state mismatch")
 		if !setting.ShouldProxyRun {
 			log.Info().Msg("keepalive detected proxy running")
-			app.Proxy.Stop()
+			h.Stop()
 		} else {
 			log.Info().Msg("keepalive detected proxy not running")
-			app.Proxy.Start()
+			h.Start()
 		}
 	}
 }

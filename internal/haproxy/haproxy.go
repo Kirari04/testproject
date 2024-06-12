@@ -13,9 +13,10 @@ import (
 )
 
 type Haproxy struct {
-	i        HaproxyInternal
-	s        t.Server
-	stopChan chan bool
+	i                HaproxyInternal
+	s                t.Server
+	stopChan         chan bool
+	keepAliveEnabled bool
 }
 
 type HaproxyInternal struct {

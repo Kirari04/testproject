@@ -1,4 +1,4 @@
-package util
+package haproxy
 
 import (
 	"bytes"
@@ -10,10 +10,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
 
-func TestHaproxyConfig(db *gorm.DB) error {
+func (h *Haproxy) CheckConfig() error {
+	db := h.s.DB()
 	cmd := exec.Command("haproxy", "-c", "-V", "-f", "haproxy/haproxy.cfg")
 	var stdOut, stdErr bytes.Buffer
 	cmd.Stdout = &stdOut

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testproject/internal/m"
 	"testproject/internal/t"
-	"testproject/internal/util"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -148,7 +147,7 @@ func (h *CreateProxyHandler) Route(c echo.Context) error {
 		return err
 	}
 
-	if err := util.GenerateProxyConfig(h.s); err != nil {
+	if err := h.s.HaGenerateConfig(); err != nil {
 		log.Error().Err(err).Msg("Failed to generate proxy config")
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to generate proxy config: Check logs for more information")
 	}
