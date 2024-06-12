@@ -37,3 +37,7 @@ func (s *Server) HaStopKeepAlive() {
 func (s *Server) HaConfigPath() string {
 	return s.Haproxy.ConfigPath()
 }
+
+func (s *Server) HaReload() error {
+	return s.Haproxy.Reload()
+}

@@ -3,7 +3,7 @@ build:
 	@go build -o main ./main.go
 
 run:
-	@go run ./main.go
+	@go build -o main ./main.go && ./main serve
 
 build-docker:
 	@docker build -t $(dockertag) . --load

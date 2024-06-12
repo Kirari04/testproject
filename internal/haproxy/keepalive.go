@@ -26,6 +26,16 @@ func (h *Haproxy) StopKeepAlive() {
 }
 
 func (h *Haproxy) runKeepAlive() {
+	// update isRunning
+	h.i.Lock()
+	if h.i.Cmd == nil || h.i.Cmd.Process == nil || h.i.Cmd.Process.Pid < 1 {
+		h.i.isRunning = false
+	} else {
+		h.i.isRunning = true
+	}
+	h.i.Unlock()
+
+	// run keepalive
 	tx := h.s.DB()
 	var setting m.Setting
 	if err := tx.First(&setting).Error; err != nil {

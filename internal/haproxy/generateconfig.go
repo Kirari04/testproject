@@ -20,6 +20,7 @@ func (h *Haproxy) GenerateConfig() error {
 		// generated 2024-06-03, Mozilla Guideline v5.7, HAProxy 3.0, OpenSSL 1.1.1k, modern configuration
 		// https://ssl-config.mozilla.org/#server=haproxy&version=3.0&config=modern&openssl=1.1.1k&guideline=5.7
 		"\n\nglobal" +
+		"\n  stats socket /var/run/haproxy.sock mode 600 expose-fd listeners level user" +
 		"\n  ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256" +
 		"\n  ssl-default-bind-options prefer-client-ciphers no-sslv3 no-tlsv10 no-tlsv11 no-tlsv12 no-tls-tickets" +
 		"\n  ssl-default-server-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256" +
@@ -245,9 +246,6 @@ func (h *Haproxy) GenerateConfig() error {
 
 	// assemble config
 	cfg := defaultsCfg + peersCfg + frontendCfg + backendCfg + "\n"
-	if h.IsRunning() {
-		h.Stop()
-	}
 
 	// get current config
 	var currentCfg []byte
@@ -275,7 +273,7 @@ func (h *Haproxy) GenerateConfig() error {
 		return fmt.Errorf("config is invalid: %w", err)
 	}
 
-	h.Start()
+	h.Reload()
 	return nil
 }
 
