@@ -24,7 +24,7 @@ func (h *Haproxy) GetStats() (*[]t.ProxyStatus, error) {
 	url := "http://127.0.0.1:8405/metrics"
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to fetch metrics")
+		log.Warn().Err(err).Msg("failed to fetch metrics")
 		return nil, err
 	}
 	defer resp.Body.Close()
