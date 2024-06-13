@@ -28,9 +28,11 @@ func (h *Haproxy) StopKeepAlive() {
 func (h *Haproxy) runKeepAlive() {
 	// update isRunning
 	h.i.Lock()
-	if h.i.Cmd == nil || h.i.Cmd.Process == nil || h.i.Cmd.Process.Pid < 1 {
+	if h.i.Cmd == nil || h.i.Cmd.Process == nil || h.i.Cmd.Process.Pid < 1 || h.i.Cmd.ProcessState != nil {
+		// log.Debug().Msg("keepalive: haproxy is not running")
 		h.i.isRunning = false
 	} else {
+		// log.Debug().Int("pid", h.i.Cmd.Process.Pid).Msg("keepalive: haproxy is running")
 		h.i.isRunning = true
 	}
 	h.i.Unlock()
