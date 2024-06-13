@@ -10,6 +10,7 @@ import (
 )
 
 func (h *Haproxy) GenerateConfig() error {
+	log.Info().Msg("generating config")
 	tx := h.s.DB().Begin()
 	// default config
 	defaultsCfg := "defaults" +
@@ -100,6 +101,38 @@ func (h *Haproxy) GenerateConfig() error {
 			bwLimitOutName := fmt.Sprintf("bwlimit_out_%d", frontend.ID)
 			stickTableInName := "peerscfg/stick_in"
 			stickTableOutName := "peerscfg/stick_out"
+
+			// frontendCfg += "\n  option httplog\n  log stdout format raw local0 info"
+
+			frontendCfg += "\n  option httpclose"
+
+			frontendCfg += "\n  capture request header Host len 64"
+			frontendCfg += "\n  capture request header User-Agent len 256"
+			frontendCfg += "\n  capture request header Content-Length len 10"
+			frontendCfg += "\n  capture request header Referer len 256"
+			frontendCfg += "\n  capture response header Content-Length len 10"
+
+			// block other common attacks
+			frontendCfg += "\n  acl forbidden_all path_dir .git .svn .hg node_modules logs config.php settings.py database.yml secret private keys .env .env.local .env.production .env.test dist build .htaccess web.config"
+			frontendCfg += "\n  acl forbidden_all url_reg -i \\.(bak|backup|tmp|temp|swp|DS_Store|log|zip|tar|tar\\.gz|tgz|exe|dll|so|dylib)$"
+			frontendCfg += "\n  acl forbidden_all url_reg -i .*(\\.|%2e)(\\.|%2e)(%2f|%5c|/|\\\\\\\\)"
+
+			// Block requests with forbidden HTTP methods
+			frontendCfg += "\n  acl forbidden_all method TRACE TRACK"
+			// Block User-Agents known for malicious activities (example: some automated tools or outdated browsers)
+			frontendCfg += "\n  acl forbidden_agents hdr_sub(User-Agent) -i sqlmap nikto w3af acunetix netsparker zgrab jbrofuzz sqlninja sqlpowerinjector sqlsus yersinia commix andsql rips xsser openvas skipfish grabber appscan netspider gobuster"
+			// block apache chunk exploit, ...
+			frontendCfg += "\n  acl forbidden_all hdr_sub(transfer-encoding) -i chunked"
+			frontendCfg += "\n  acl forbidden_all hdr_beg(host) -i apache- localhost"
+			// Check if the 'host' header appears more than once in the request
+			frontendCfg += "\n  acl forbidden_all hdr_cnt(host) gt 1"
+			// Check if the 'content-length' header appears more than once in the request
+			frontendCfg += "\n  acl forbidden_all hdr_cnt(content-length) gt 1"
+			// Check if the 'content-length' header value is less than 0
+			frontendCfg += "\n  acl forbidden_all hdr_val(content-length) lt 0"
+
+			// Block all forbidden requests
+			frontendCfg += "\n  http-request deny deny_status 403 if forbidden_all"
 
 			// match bandwith limits with acls
 			if frontend.DefBwInLimit > 0 {
@@ -194,6 +227,16 @@ func (h *Haproxy) GenerateConfig() error {
 		backendName := backendName(frontend)
 		// backend base config
 		backendCfg += fmt.Sprintf("\n\nbackend %s\n  mode http\n  balance roundrobin", backendName)
+		// Adds X-Forwarded-For header
+		// Docs: https://www.haproxy.com/documentation/haproxy-configuration-manual/latest/#option%20forwardfor
+		backendCfg += "\n  option forwardfor"
+		// Analyze all server responses and block responses with cacheable cookies
+		// Docs: https://www.haproxy.com/documentation/haproxy-configuration-manual/latest/#4-option%20checkcache
+		backendCfg += "\n  option checkcache"
+		// Closes the connection between frontend and server
+		// Docs: https://www.haproxy.com/documentation/haproxy-configuration-manual/latest/#option%20httpclose
+		backendCfg += "\n  option httpclose"
+
 		if frontend.HttpCheck != nil &&
 			frontend.HttpCheckMethod != nil &&
 			frontend.HttpCheckPath != nil &&
@@ -265,6 +308,11 @@ func (h *Haproxy) GenerateConfig() error {
 	// check if config is valid
 	if err := h.CheckConfig(); err != nil {
 		if len(currentCfg) > 0 {
+			log.Info().Msg("rollback config")
+			// copy new config to backup
+			if err := os.WriteFile(h.ConfigPath()+".bak", []byte(cfg), 0644); err != nil {
+				return fmt.Errorf("failed to write config: %w", err)
+			}
 			// rollback config
 			if err := os.WriteFile(h.ConfigPath(), []byte(currentCfg), 0644); err != nil {
 				return fmt.Errorf("failed to rollback config: %w", err)

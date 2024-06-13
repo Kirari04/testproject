@@ -13,6 +13,7 @@ import (
 )
 
 func (h *Haproxy) CheckConfig() error {
+	log.Info().Msg("checking config")
 	db := h.s.DB()
 	cmd := exec.Command("haproxy", "-c", "-V", "-f", h.s.HaConfigPath())
 	var stdOut, stdErr bytes.Buffer

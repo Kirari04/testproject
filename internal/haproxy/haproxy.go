@@ -103,6 +103,12 @@ func (h *Haproxy) start(reload bool) error {
 	}
 	name := fmt.Sprintf("%x", r)
 
+	if reload {
+		log.Info().Msgf("[%s]: haproxy is reloading", name)
+	} else {
+		log.Info().Msgf("[%s]: haproxy is starting", name)
+	}
+
 	h.i.Lock()
 	if reload {
 		if !h.i.isRunning || h.i.Cmd == nil || h.i.Cmd.Process == nil || h.i.Cmd.Process.Pid < 1 {
@@ -122,7 +128,6 @@ func (h *Haproxy) start(reload bool) error {
 	tmp.Stdout = h.stdOut
 	tmp.Stderr = h.stdErr
 
-	log.Info().Msgf("[%s]: haproxy is starting", name)
 	if err := tmp.Start(); err != nil {
 		log.Error().Err(err).
 			Msgf("[%s]: failed to start haproxy process", name)
