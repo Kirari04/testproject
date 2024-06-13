@@ -113,9 +113,15 @@ func (h *Haproxy) GenerateConfig() error {
 			frontendCfg += "\n  capture response header Content-Length len 10"
 
 			// block other common attacks
-			frontendCfg += "\n  acl forbidden_all path_dir .git .svn .hg node_modules logs config.php settings.py database.yml secret private keys .env .env.local .env.production .env.test dist build .htaccess web.config"
+			frontendCfg += "\n  acl forbidden_all path_dir changelog.txt .git .svn .hg .bzr node_modules logs settings.py database.yml dist build web.config"
+			frontendCfg += "\n  acl forbidden_all path_dir .env .env.local .env.production .env.test"
+			frontendCfg += "\n  acl forbidden_all path_dir secret private keys .ssh .htpasswd id_rsa id_dsa key.pem server.key server.pem"
+			frontendCfg += "\n  acl forbidden_all path_dir .htaccess .php_cs.cache test.php i.php info.php phpinfo.php adminer.php config.php composer.json composer.lock vb_test.php lfm.php"
+			// frontendCfg += "\n  acl forbidden_all path_dir "
 			frontendCfg += "\n  acl forbidden_all url_reg -i \\.(bak|backup|tmp|temp|swp|DS_Store|log|zip|tar|tar\\.gz|tgz|exe|dll|so|dylib)$"
 			frontendCfg += "\n  acl forbidden_all url_reg -i .*(\\.|%2e)(\\.|%2e)(%2f|%5c|/|\\\\\\\\)"
+			frontendCfg += "\n  acl forbidden_all url_sub allow_url_include auto_prepend_file php://input"
+			// frontendCfg += "\n  acl forbidden_all url_reg -i "
 
 			// Block requests with forbidden HTTP methods
 			frontendCfg += "\n  acl forbidden_all method TRACE TRACK"
