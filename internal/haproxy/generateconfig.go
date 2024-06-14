@@ -242,6 +242,9 @@ func (h *Haproxy) GenerateConfig() error {
 		// Closes the connection between frontend and server
 		// Docs: https://www.haproxy.com/documentation/haproxy-configuration-manual/latest/#option%20httpclose
 		backendCfg += "\n  option httpclose"
+		// timeout websocket tunnel
+		// Docs: https://www.haproxy.com/documentation/haproxy-configuration-tutorials/load-balancing/websocket/
+		backendCfg += "\n  timeout tunnel 1h"
 
 		if frontend.HttpCheck != nil &&
 			frontend.HttpCheckMethod != nil &&
