@@ -5,6 +5,7 @@ go 1.22.3
 require (
 	github.com/caarlos0/env/v11 v11.0.1
 	github.com/go-gormigrate/gormigrate/v2 v2.1.2
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/common v0.54.0
 	github.com/rs/zerolog v1.33.0
@@ -17,7 +18,6 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
