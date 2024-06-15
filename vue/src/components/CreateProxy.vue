@@ -102,7 +102,9 @@ function removeBackend(index: number) {
     backends.value.splice(index, 1)
 }
 
+const isCreatingProxy = ref(false)
 async function createProxy() {
+    isCreatingProxy.value = true
     loadingBar.start()
     await axios.post<string>(`${import.meta.env.VITE_APP_API}/api/proxy`, {
         port: port.value,
@@ -171,6 +173,7 @@ async function createProxy() {
             })
         })
     loadingBar.finish()
+    isCreatingProxy.value = false
 }
 </script>
 <template>
@@ -395,7 +398,7 @@ async function createProxy() {
                         </n-space>
                     </n-tab-pane>
                 </n-tabs>
-                <n-button type="primary" @click="createProxy()">Save</n-button>
+                <n-button type="primary" @click="createProxy()" :loading="isCreatingProxy">Save</n-button>
             </n-space>
         </n-card>
     </n-modal>

@@ -20,7 +20,7 @@ func (h *GetProxiesStatusHandler) Route(c echo.Context) error {
 	apiRes, err := h.s.HaGetStats()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to fetch haproxy stats")
-		return err
+		return c.JSON(http.StatusOK, []t.ProxyStatus{})
 	}
 
 	return c.JSON(http.StatusOK, apiRes)

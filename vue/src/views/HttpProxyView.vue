@@ -31,7 +31,9 @@ const store = useStore()
 const proxies = ref<Frontend[]>([])
 const proxies_status = ref<FrontendStatus[]>([])
 
+const isDeletingProxy = ref<null | number>(null)
 async function deleteProxy(pr: Frontend) {
+	isDeletingProxy.value = pr.id
 	loadingBar.start()
 	await axios.delete<string>(`${import.meta.env.VITE_APP_API}/api/proxy`, {
 		data: {
@@ -53,12 +55,16 @@ async function deleteProxy(pr: Frontend) {
 
 	await getProxies()
 	loadingBar.finish()
+	isDeletingProxy.value = null
 }
 
+const isReloadingProxies = ref(false)
 async function reloadProxies() {
+	isReloadingProxies.value = true
 	loadingBar.start()
 	await getProxies()
 	loadingBar.finish()
+	isReloadingProxies.value = false
 }
 
 async function getProxies() {
@@ -136,7 +142,7 @@ const statuses: ProxyStatus[] = [
 	<n-card title="Proxies">
 		<n-space vertical>
 			<n-space>
-				<n-button @click="reloadProxies()">Reload List</n-button>
+				<n-button @click="reloadProxies()" :loading="isReloadingProxies">Reload List</n-button>
 				<CreateProxy @onCreated="reloadProxies" />
 			</n-space>
 			<n-table :single-line="false">
@@ -208,7 +214,7 @@ const statuses: ProxyStatus[] = [
 						</td>
 						<td>
 							<n-space>
-								<n-button type="error" @click="deleteProxy(pr)">Delete</n-button>
+								<n-button type="error" @click="deleteProxy(pr)" :loading="isDeletingProxy === pr.id">Delete</n-button>
 							</n-space>
 						</td>
 					</tr>

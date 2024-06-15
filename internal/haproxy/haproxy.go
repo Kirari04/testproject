@@ -33,8 +33,7 @@ type HaproxyInternal struct {
 }
 
 func NewHaproxy(s t.Server) *Haproxy {
-	l, stdOut, stderr := NewStdLog()
-	l.Track(s.DB())
+	stdOut, stderr := NewStdLog(s.DB())
 	h := &Haproxy{
 		i: HaproxyInternal{
 			isRunning: false,
@@ -43,8 +42,8 @@ func NewHaproxy(s t.Server) *Haproxy {
 		stopChan:   make(chan bool),
 		onStopChan: make(chan bool, 1),
 		s:          s,
-		stdOut:     &stdOut,
-		stdErr:     &stderr,
+		stdOut:     stdOut,
+		stdErr:     stderr,
 	}
 
 	return h
@@ -160,6 +159,8 @@ func (h *Haproxy) start(reload bool) error {
 		// new process
 		tmp = exec.Command("haproxy", "-f", h.ConfigPath())
 	}
+	// tmp.Stdout = os.Stdout
+	// tmp.Stderr = os.Stdout
 	tmp.Stdout = h.stdOut
 	tmp.Stderr = h.stdErr
 

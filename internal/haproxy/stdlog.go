@@ -1,77 +1,61 @@
 package haproxy
 
 import (
-	"bytes"
-	"sync"
 	"testproject/internal/m"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
-type LogStdBuf struct {
-	isTracking bool
-	out        bytes.Buffer
-	err        bytes.Buffer
-	sync.Mutex
+type LogBuf struct {
+	db        *gorm.DB
+	WriteChan chan []byte
 }
 
-func (l *LogStdBuf) ReadStdOut() (string, error) {
-	return l.out.ReadString('\n')
+func (l *LogBuf) Write(p []byte) (n int, err error) {
+	l.WriteChan <- p
+	return len(p), nil
 }
+func (l *LogBuf) Track() {
+	buffer := make([]byte, 1024*1024)
+	bi := 0
+	for {
+		b, ok := <-l.WriteChan
+		if !ok {
+			break
+		}
+		for i := 0; i < len(b); i++ {
+			if b[i] == '\n' {
+				if err := l.db.Create(&m.HaproxyLog{
+					Data: string(buffer[:bi]),
+				}).Error; err != nil {
+					log.Error().Err(err).Msg("failed to save haproxy log")
+					log.Debug().Msgf("haproxy log: %s", string(buffer))
+				}
 
-func (l *LogStdBuf) ReadStdErr() (string, error) {
-	return l.err.ReadString('\n')
-}
-
-func (l *LogStdBuf) Track(db *gorm.DB) {
-	l.Lock()
-	if l.isTracking {
-		l.Unlock()
-		return
+				// reset buffer
+				buffer = make([]byte, 1024*1024)
+				bi = 0
+				continue
+			}
+			// append char to buffer
+			buffer[bi] = b[i]
+			bi++
+		}
 	}
-	l.isTracking = true
-	l.Unlock()
-	go func() {
-		for {
-			msg, err := l.ReadStdOut()
-			if err != nil {
-				time.Sleep(time.Second)
-				continue
-			}
-			if msg != "" {
-				if err := db.Create(&m.HaproxyLog{
-					Data: msg,
-				}).Error; err != nil {
-					log.Error().Err(err).Msg("failed to save haproxy log")
-				}
-			}
-		}
-	}()
-	go func() {
-		for {
-			msg, err := l.ReadStdErr()
-			if err != nil {
-				time.Sleep(time.Second)
-				continue
-			}
-			if msg != "" {
-				if err := db.Create(&m.HaproxyLog{
-					Data: msg,
-				}).Error; err != nil {
-					log.Error().Err(err).Msg("failed to save haproxy log")
-				}
-			}
-		}
-	}()
 }
 
-func NewStdLog() (*LogStdBuf, bytes.Buffer, bytes.Buffer) {
-	out := bytes.Buffer{}
-	err := bytes.Buffer{}
-	return &LogStdBuf{
-		out: out,
-		err: err,
-	}, out, err
+func NewStdLog(db *gorm.DB) (*LogBuf, *LogBuf) {
+	out := LogBuf{
+		db:        db,
+		WriteChan: make(chan []byte, 1024),
+	}
+	err := LogBuf{
+		db:        db,
+		WriteChan: make(chan []byte, 1024),
+	}
+	go out.Track()
+	go err.Track()
+
+	return &out, &err
 }
