@@ -91,7 +91,7 @@ func (h *AddCertificateHandler) Route(c echo.Context) error {
 		return fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
-	if err := h.s.HaGenerateConfig(); err != nil {
+	if err := h.s.HaGenerateConfig(true); err != nil {
 		log.Error().Err(err).Msg("Failed to generate proxy config")
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to generate proxy config: Check logs for more information")
 	}

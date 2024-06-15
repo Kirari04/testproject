@@ -1,6 +1,8 @@
 package server
 
-import "testproject/internal/t"
+import (
+	"testproject/internal/t"
+)
 
 func (s *Server) HaStart() {
 	s.Haproxy.Start()
@@ -18,8 +20,8 @@ func (s *Server) HaKeepAlive() {
 	s.Haproxy.KeepAlive()
 }
 
-func (s *Server) HaGenerateConfig() error {
-	return s.Haproxy.GenerateConfig()
+func (s *Server) HaGenerateConfig(reload bool) error {
+	return s.Haproxy.GenerateConfig(reload)
 }
 
 func (s *Server) HaCheckConfig() error {

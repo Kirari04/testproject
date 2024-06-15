@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
 	"testproject/internal/server"
 	"time"
 
@@ -12,6 +13,17 @@ import (
 )
 
 func serve(c *cli.Context) error {
+	var useTls bool
+	if c.Bool("tls") {
+		useTls = true
+	}
+
+	var useSocket bool
+	if c.Bool("socket") {
+		useSocket = true
+	}
+	os.Setenv("SOCKET", strconv.FormatBool(useSocket))
+
 	s, err := server.NewServer()
 	if err != nil {
 		return err
@@ -19,11 +31,6 @@ func serve(c *cli.Context) error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
-
-	var useTls bool
-	if c.Bool("tls") {
-		useTls = true
-	}
 
 	doingExit := false
 	// Start server

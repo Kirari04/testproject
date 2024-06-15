@@ -103,6 +103,8 @@ func (h *Haproxy) start(reload bool) error {
 	}
 	name := fmt.Sprintf("%x", r)
 
+	h.GenerateConfig(false)
+
 	if reload {
 		log.Info().Msgf("[%s]: haproxy is reloading", name)
 	} else {
@@ -120,9 +122,17 @@ func (h *Haproxy) start(reload bool) error {
 	defer h.i.Unlock()
 	h.i.isReloading = true
 	var tmp *exec.Cmd
-	if reload {
+	if reload && h.s.ENV().Socket {
+		// new process with socket
 		tmp = exec.Command("haproxy", "-f", h.ConfigPath(), "-x", "/var/run/haproxy.sock", "-sf", strconv.Itoa(h.i.Cmd.Process.Pid))
 	} else {
+		// kill the old process if exists
+		if h.i.Cmd != nil && h.i.Cmd.Process != nil && h.i.Cmd.Process.Pid >= 1 {
+			if err := h.i.Cmd.Process.Kill(); err != nil {
+				log.Error().Err(err).Msgf("[%s]: failed to kill old haproxy process", name)
+			}
+		}
+		// new process
 		tmp = exec.Command("haproxy", "-f", h.ConfigPath())
 	}
 	tmp.Stdout = h.stdOut

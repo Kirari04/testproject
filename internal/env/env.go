@@ -9,6 +9,7 @@ import (
 type Env struct {
 	Addr    string `env:"ADDR" envDefault:"0.0.0.0:8080"`
 	WorkDir string `env:"WORK_DIR" envDefault:"./.data"`
+	Socket  bool   `env:"SOCKET" envDefault:"false"`
 }
 
 func NewEnv() (*Env, error) {

@@ -19,7 +19,7 @@ func (h *StartHandler) Route(c echo.Context) error {
 	if h.s.HaIsRunning() {
 		return c.String(http.StatusOK, "proxy is already running")
 	}
-	if err := h.s.HaGenerateConfig(); err != nil {
+	if err := h.s.HaGenerateConfig(true); err != nil {
 		return err
 	}
 	return c.String(http.StatusOK, "ok")

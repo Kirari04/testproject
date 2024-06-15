@@ -28,6 +28,10 @@ func Cmd() error {
 						Name:  "tls",
 						Usage: "use TLS",
 					},
+					&cli.BoolFlag{
+						Name:  "socket",
+						Usage: "enables the haproxy socket for seemless reloading",
+					},
 				},
 			},
 			{

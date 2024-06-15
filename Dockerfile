@@ -28,4 +28,4 @@ COPY --from=vue /app/dist /app/dist
 
 VOLUME [ "/app/.data" ]
 
-ENTRYPOINT ["/app/main", "serve", "--tls"]
+ENTRYPOINT ["/app/main", "serve", "--tls", "--socket"]

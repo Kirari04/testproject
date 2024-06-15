@@ -12,7 +12,7 @@ type Server interface {
 	HaStart()
 	HaStop()
 	HaIsRunning() bool
-	HaGenerateConfig() error
+	HaGenerateConfig(reload bool) error
 	HaCheckConfig() error
 	HaGetStats() (*[]ProxyStatus, error)
 	HaKeepAlive()

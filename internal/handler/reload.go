@@ -19,7 +19,7 @@ func (h *ReloadHandler) Route(c echo.Context) error {
 	if !h.s.HaIsRunning() {
 		return c.String(http.StatusOK, "proxy is not running")
 	}
-	if err := h.s.HaGenerateConfig(); err != nil {
+	if err := h.s.HaGenerateConfig(true); err != nil {
 		return err
 	}
 	return c.String(http.StatusOK, "ok")
