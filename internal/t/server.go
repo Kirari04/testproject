@@ -9,8 +9,9 @@ import (
 type Server interface {
 	DB() *gorm.DB
 	ENV() *env.Env
-	HaStart()
-	HaStop()
+	HaStart() error
+	HaStop() error
+	HaReload() error
 	HaIsRunning() bool
 	HaGenerateConfig(reload bool) error
 	HaCheckConfig() error

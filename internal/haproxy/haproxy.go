@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testproject/internal/m"
 	"testproject/internal/t"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -17,6 +18,7 @@ type Haproxy struct {
 	i                HaproxyInternal
 	s                t.Server
 	stopChan         chan bool
+	onStopChan       chan bool
 	keepAliveEnabled bool
 	stdOut           io.Writer
 	stdErr           io.Writer
@@ -38,31 +40,54 @@ func NewHaproxy(s t.Server) *Haproxy {
 			isRunning: false,
 			Cmd:       nil,
 		},
-		stopChan: make(chan bool),
-		s:        s,
-		stdOut:   &stdOut,
-		stdErr:   &stderr,
+		stopChan:   make(chan bool),
+		onStopChan: make(chan bool, 1),
+		s:          s,
+		stdOut:     &stdOut,
+		stdErr:     &stderr,
 	}
 
 	return h
 }
 
 func (h *Haproxy) Start() error {
-	return h.start(false)
+	if err := h.start(false); err != nil {
+		return err
+	}
+	// force update state
+	h.RunKeepAlive()
+	return nil
 }
 
 func (h *Haproxy) Reload() error {
-	return h.start(true)
+	if err := h.start(true); err != nil {
+		return err
+	}
+	// force update state
+	h.RunKeepAlive()
+	return nil
 }
 
-func (h *Haproxy) Stop() {
+func (h *Haproxy) Stop() error {
 	h.i.Lock()
-	defer h.i.Unlock()
 	if !h.i.isRunning {
-		return
+		h.i.Unlock()
+		return nil
 	}
 	h.shouldBeRunning(false)
+	h.i.Unlock()
 	h.stopChan <- true
+	// wait for stop
+	select {
+	case <-h.onStopChan:
+	case <-time.After(time.Second * 15):
+		return fmt.Errorf("timeout while waiting for haproxy to stop")
+	}
+
+	// force update state
+	h.RunKeepAlive()
+
+	return nil
 }
 
 func (h *Haproxy) IsRunning() bool {
@@ -175,6 +200,7 @@ func (h *Haproxy) start(reload bool) error {
 					h.i.Cmd.Process.Kill()
 				}
 				h.i.Cmd = nil
+				h.onStopChan <- true
 			}
 			h.i.Unlock()
 		}

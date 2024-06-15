@@ -333,7 +333,9 @@ func (h *Haproxy) GenerateConfig(reload bool) error {
 	}
 
 	if reload {
-		h.Reload()
+		if err := h.Reload(); err != nil {
+			return err
+		}
 	}
 	return nil
 }

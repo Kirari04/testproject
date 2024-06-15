@@ -9,10 +9,10 @@ import (
 
 func (h *Haproxy) KeepAlive() {
 	h.keepAliveEnabled = true
-	h.runKeepAlive()
+	h.RunKeepAlive()
 	for {
 		time.Sleep(time.Second * 2)
-		h.runKeepAlive()
+		h.RunKeepAlive()
 		if !h.keepAliveEnabled {
 			log.Info().Msg("keepalive stopped")
 			break
@@ -25,7 +25,7 @@ func (h *Haproxy) StopKeepAlive() {
 	h.keepAliveEnabled = false
 }
 
-func (h *Haproxy) runKeepAlive() {
+func (h *Haproxy) RunKeepAlive() {
 	// update isRunning
 	h.i.Lock()
 	if h.i.Cmd == nil || h.i.Cmd.Process == nil || h.i.Cmd.Process.Pid < 1 || h.i.Cmd.ProcessState != nil {

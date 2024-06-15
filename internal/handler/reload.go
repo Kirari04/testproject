@@ -5,6 +5,7 @@ import (
 	"testproject/internal/t"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type ReloadHandler struct {
@@ -16,11 +17,9 @@ func NewReloadHandler(s t.Server) *ReloadHandler {
 }
 
 func (h *ReloadHandler) Route(c echo.Context) error {
-	if !h.s.HaIsRunning() {
-		return c.String(http.StatusOK, "proxy is not running")
-	}
-	if err := h.s.HaGenerateConfig(true); err != nil {
-		return err
+	if err := h.s.HaReload(); err != nil {
+		log.Error().Err(err).Msg("failed to reload proxy")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to reload proxy")
 	}
 	return c.String(http.StatusOK, "ok")
 }

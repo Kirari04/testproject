@@ -4,12 +4,16 @@ import (
 	"testproject/internal/t"
 )
 
-func (s *Server) HaStart() {
-	s.Haproxy.Start()
+func (s *Server) HaStart() error {
+	return s.Haproxy.Start()
 }
 
-func (s *Server) HaStop() {
-	s.Haproxy.Stop()
+func (s *Server) HaStop() error {
+	return s.Haproxy.Stop()
+}
+
+func (s *Server) HaReload() error {
+	return s.Haproxy.Reload()
 }
 
 func (s *Server) HaIsRunning() bool {
@@ -38,8 +42,4 @@ func (s *Server) HaStopKeepAlive() {
 
 func (s *Server) HaConfigPath() string {
 	return s.Haproxy.ConfigPath()
-}
-
-func (s *Server) HaReload() error {
-	return s.Haproxy.Reload()
 }

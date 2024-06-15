@@ -5,6 +5,7 @@ import (
 	"testproject/internal/t"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 type StopHandler struct {
@@ -19,6 +20,9 @@ func (h *StopHandler) Route(c echo.Context) error {
 	if !h.s.HaIsRunning() {
 		return c.String(http.StatusOK, "proxy is already stopped")
 	}
-	h.s.HaStop()
+	if err := h.s.HaStop(); err != nil {
+		log.Error().Err(err).Msg("failed to stop haproxy")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to stop haproxy")
+	}
 	return c.String(http.StatusOK, "ok")
 }
