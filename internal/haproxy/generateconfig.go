@@ -83,7 +83,7 @@ func (h *Haproxy) GenerateConfig(reload bool) error {
 		for _, frontend := range frontends {
 			aclFrontendName := fmt.Sprintf("ACL_%d", frontend.ID)
 			matchAclDomain := fmt.Sprintf("%s:%d", frontend.Domain, frontend.Port)
-			if frontend.Port == 80 {
+			if frontend.Port == 80 || frontend.Port == 443 {
 				matchAclDomain = frontend.Domain
 			}
 			aclRule := fmt.Sprintf("\n  acl %s hdr(host) -i %s", aclFrontendName, matchAclDomain)
