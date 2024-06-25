@@ -91,3 +91,8 @@ export interface Certificate {
   name: string
   pem_path: string
 }
+
+export interface Settings {
+  acme_email: string
+  acme_cloudflare_dns_api_token: string
+}

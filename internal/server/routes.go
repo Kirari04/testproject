@@ -24,6 +24,9 @@ func (s *Server) Routes() error {
 
 	s.e.GET("/api/haproxy/logs", handler.NewGetHaproxyLogsHandler(s).Route)
 
+	s.e.GET("/api/settings", handler.NewGetSettingsHandler(s).Route)
+	s.e.POST("/api/settings", handler.NewSetSettingsHandler(s).Route)
+
 	s.e.GET("/api/certificates", handler.NewGetCertificatesHandler(s).Route)
 	s.e.POST("/api/certificate", handler.NewAddCertificateHandler(s).Route)
 	s.e.DELETE("/api/certificate", handler.NewDeleteCertificateHandler(s).Route)

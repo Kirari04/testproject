@@ -968,6 +968,49 @@ func Connect(cfg *env.Env) (*gorm.DB, error) {
 				return nil
 			},
 		},
+		{
+			ID: "16",
+			Migrate: func(tx *gorm.DB) error {
+				type Setting struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					ShouldProxyRun bool `gorm:"column:should_proxy_run" json:"should_proxy_run"`
+
+					AcmeEmail                 string `gorm:"column:acme_email" json:"acme_email"`
+					AcmeCloudflareDNSAPIToken string `gorm:"column:acme_cloudflare_dns_api_token" json:"acme_cloudflare_dns_api_token"`
+				}
+
+				if err := tx.Migrator().AddColumn(&Setting{}, "AcmeEmail"); err != nil {
+					return err
+				}
+				if err := tx.Migrator().AddColumn(&Setting{}, "AcmeCloudflareDNSAPIToken"); err != nil {
+					return err
+				}
+				return nil
+			},
+			Rollback: func(tx *gorm.DB) error {
+				type Setting struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					ShouldProxyRun bool `gorm:"column:should_proxy_run" json:"should_proxy_run"`
+
+					AcmeEmail                 string `gorm:"column:acme_email" json:"acme_email"`
+					AcmeCloudflareDNSAPIToken string `gorm:"column:acme_cloudflare_dns_api_token" json:"acme_cloudflare_dns_api_token"`
+				}
+
+				if err := tx.Migrator().DropColumn(&Setting{}, "AcmeEmail"); err != nil {
+					return err
+				}
+				if err := tx.Migrator().DropColumn(&Setting{}, "AcmeCloudflareDNSAPIToken"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
 	})
 
 	log.Info().Msg("Migration database")

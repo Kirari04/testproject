@@ -10,6 +10,7 @@ import {
 	WebRound,
 	ListRound,
 	SecurityRound,
+	SettingsRound,
 } from '@vicons/material'
 import { useStore } from './stores/store'
 
@@ -48,6 +49,11 @@ const menuOptions: MenuOption[] = [
 		label: 'Log',
 		key: '/log',
 		icon: renderIcon(ListRound),
+	},
+	{
+		label: 'Settings',
+		key: '/settings',
+		icon: renderIcon(SettingsRound),
 	},
 	{
 		label: 'About',

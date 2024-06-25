@@ -27,6 +27,11 @@ const router = createRouter({
       path: '/log',
       name: 'log',
       component: () => import('../views/Log.vue')
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('../views/SettingsView.vue')
     }
   ]
 })
