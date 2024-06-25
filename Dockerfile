@@ -1,4 +1,4 @@
-FROM golang:alpine3.20 as builder
+FROM golang:alpine3.20 AS builder
 
 WORKDIR /app
 RUN apk update
@@ -10,7 +10,7 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux CGO_ENABLED=1 GOARCH=amd64 go build -ldflags="-w -s" -o main ./main.go
 
-FROM node:20 as vue
+FROM node:20 AS vue
 WORKDIR /app
 RUN npm install -g bun
 ENV NODE_ENV=production
