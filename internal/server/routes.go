@@ -30,5 +30,6 @@ func (s *Server) Routes() error {
 	s.e.GET("/api/certificates", handler.NewGetCertificatesHandler(s).Route)
 	s.e.POST("/api/certificate", handler.NewAddCertificateHandler(s).Route)
 	s.e.DELETE("/api/certificate", handler.NewDeleteCertificateHandler(s).Route)
+	s.e.POST("/api/certificate/request", handler.NewRequestCertificateHandler(s).Route)
 	return nil
 }

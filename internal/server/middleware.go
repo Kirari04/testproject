@@ -42,7 +42,9 @@ func (s *Server) Middleware() error {
 		AllowCredentials: s.AllowCredentials,
 	}))
 	s.e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
-		Skipper:      middleware.DefaultSkipper,
+		Skipper: func(c echo.Context) bool {
+			return strings.HasPrefix(c.Request().URL.Path, "/api/certificate/request")
+		},
 		ErrorMessage: "timeout",
 		OnTimeoutRouteErrorHandler: func(err error, c echo.Context) {
 			log.Error().

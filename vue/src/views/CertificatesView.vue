@@ -6,6 +6,7 @@ import ToastDesc from '@/components/ToastDesc.vue'
 import { useToast } from 'vue-toastification';
 import { useStore } from '@/stores/store'
 import UploadCertificate from '@/components/UploadCertificate.vue';
+import RequestCertificate from '@/components/RequestCertificate.vue';
 import type { Certificate } from 'env';
 
 const loadingBar = useLoadingBar()
@@ -74,6 +75,7 @@ async function deleteCertificate(cert: Certificate) {
 			<n-space>
 				<n-button @click="reloadCertificates()">Reload List</n-button>
 				<UploadCertificate @on-created="reloadCertificates()" />
+				<RequestCertificate @on-created="reloadCertificates()" />
 			</n-space>
 			<n-table :single-line="false">
 				<thead>
