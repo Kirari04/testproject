@@ -1,3 +1,5 @@
 main
 tmp
 .data/
+.env
+*.pem
