@@ -73,15 +73,24 @@ func (h *UpdateProxyHandler) Route(c echo.Context) error {
 	if h.values.Https != nil {
 		https = *h.values.Https
 	}
+
+	var frontends []m.Frontend
+	if err := h.s.DB().Where(&m.Frontend{Port: h.values.Port}).Find(&frontends).Error; err != nil {
+		return fmt.Errorf("failed to get frontends from database: %w", err)
+	}
 	if https {
-		// check if other frontends with the same port are listening on https
-		var frontends []m.Frontend
-		if err := h.s.DB().Where(&m.Frontend{Port: h.values.Port}).Find(&frontends).Error; err != nil {
-			return fmt.Errorf("failed to get frontends from database: %w", err)
-		}
+		// check if other frontends with the same port are listening on non https
 		for _, frontend := range frontends {
-			if !frontend.Https {
+			if !frontend.Https && frontend.ID != h.values.ID {
 				return c.String(http.StatusBadRequest, "This port is already in use with a non-https frontend")
+			}
+		}
+	}
+	if !https {
+		// check if other frontends with the same port are listening on https
+		for _, frontend := range frontends {
+			if frontend.Https && frontend.ID != h.values.ID {
+				return c.String(http.StatusBadRequest, "This port is already in use with a https frontend")
 			}
 		}
 	}

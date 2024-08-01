@@ -72,12 +72,10 @@ const backends = ref<{ addr: string }[]>([{ addr: '' }])
 const aliases = ref<{ domain: string }[]>([{ domain: '' }])
 
 watch(https, async () => {
-    if (https.value) {
+    if (https.value && port.value === 80) {
         port.value = 443
-    } else {
-        if (port.value === 443) {
-            port.value = 80
-        }
+    } else if(!https.value && port.value === 443) {
+        port.value = 80
     }
 })
 
