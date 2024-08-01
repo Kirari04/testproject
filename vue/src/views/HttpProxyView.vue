@@ -6,6 +6,7 @@ import type { Frontend, FrontendStatus } from 'env';
 import { useToast } from 'vue-toastification';
 import { useStore } from '@/stores/store';
 import ToastDesc from '@/components/ToastDesc.vue'
+import EditProxy from '@/components/EditProxy.vue'
 import CreateProxy from '@/components/CreateProxy.vue'
 
 let intv: any = null;
@@ -214,6 +215,7 @@ const statuses: ProxyStatus[] = [
 						</td>
 						<td>
 							<n-space>
+								<EditProxy :proxy-id="pr.id" @onCreated="reloadProxies" />
 								<n-button type="error" @click="deleteProxy(pr)" :loading="isDeletingProxy === pr.id">Delete</n-button>
 							</n-space>
 						</td>

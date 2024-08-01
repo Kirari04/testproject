@@ -11,6 +11,9 @@ export interface Frontend {
   bw_limit: number
   bw_limit_unit: number
   bw_period: number
+  bw_out_limit: number
+  bw_out_limit_unit: number
+  bw_out_period: number
   rate_limit: number
   rate_period: number
   hard_rate_limit: number

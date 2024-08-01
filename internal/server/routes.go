@@ -18,7 +18,9 @@ func (s *Server) Routes() error {
 	s.e.GET("/api/reload", handler.NewReloadHandler(s).Route)
 
 	s.e.GET("/api/proxies", handler.NewGetProxiesHandler(s).Route)
+	s.e.GET("/api/proxy", handler.NewGetProxyHandler(s).Route)
 	s.e.POST("/api/proxy", handler.NewCreateProxyHandler(s).Route)
+	s.e.PUT("/api/proxy", handler.NewUpdateProxyHandler(s).Route)
 	s.e.DELETE("/api/proxy", handler.NewDeleteProxyHandler(s).Route)
 	s.e.GET("/api/proxies/status", handler.NewGetProxiesStatusHandler(s).Route)
 
