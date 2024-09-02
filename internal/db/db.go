@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"testproject/internal/env"
 	"time"
 
@@ -1009,6 +1010,60 @@ func Connect(cfg *env.Env) (*gorm.DB, error) {
 					return err
 				}
 				return nil
+			},
+		},
+		{
+			ID: "17",
+			Migrate: func(tx *gorm.DB) error {
+				type Certificate struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					AuthType string `gorm:"column:auth_type" json:"auth_type"`
+					AuthID   uint   `gorm:"column:auth_id" json:"auth_id"`
+
+					Name    string `gorm:"column:name" json:"name"`
+					PemPath string `gorm:"column:pem_path" json:"pem_path"`
+				}
+
+				type Setting struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					ShouldProxyRun bool `gorm:"column:should_proxy_run" json:"should_proxy_run"`
+
+					AcmeEmail string `gorm:"column:acme_email" json:"acme_email"`
+				}
+
+				type AcmeCloudflareDNSAPIToken struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					SettingID uint    `gorm:"column:setting_id" json:"setting_id"`
+					Setting   Setting `json:"setting"`
+
+					Name  string `gorm:"column:name" json:"name"`
+					Token string `gorm:"column:token" json:"token"`
+				}
+
+				if err := tx.Migrator().AutoMigrate(&Certificate{}); err != nil {
+					return err
+				}
+				if err := tx.Migrator().AutoMigrate(&AcmeCloudflareDNSAPIToken{}); err != nil {
+					return err
+				}
+				if err := tx.Migrator().DropColumn(&Setting{}, "AcmeCloudflareDNSAPITokens"); err != nil {
+					return err
+				}
+
+				return nil
+			},
+			Rollback: func(tx *gorm.DB) error {
+
+				return errors.New("not implemented")
 			},
 		},
 	})

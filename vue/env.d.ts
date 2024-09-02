@@ -97,5 +97,15 @@ export interface Certificate {
 
 export interface Settings {
   acme_email: string
-  acme_cloudflare_dns_api_token: string
+  acme: SettingsAcme
+}
+
+export interface SettingsAcme {
+  cf: SettingsAcmeCf[]
+}
+
+export interface SettingsAcmeCf {
+  id: number
+  name: string
+  token: string
 }
