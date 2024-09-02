@@ -8,18 +8,19 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type SetSettingsHandler struct {
+type CreateAcmeCf struct {
 	s      t.Server
 	values struct {
-		AcmeEmail string `json:"acme_email"`
+		Name  string `json:"name"`
+		Token string `json:"token"`
 	}
 }
 
-func NewSetSettingsHandler(s t.Server) *SetSettingsHandler {
-	return &SetSettingsHandler{s: s}
+func NewCreateAcmeCf(s t.Server) *CreateAcmeCf {
+	return &CreateAcmeCf{s: s}
 }
 
-func (h *SetSettingsHandler) Route(c echo.Context) error {
+func (h *CreateAcmeCf) Route(c echo.Context) error {
 	if err := c.Bind(&h.values); err != nil {
 		return err
 	}
@@ -31,7 +32,14 @@ func (h *SetSettingsHandler) Route(c echo.Context) error {
 		return err
 	}
 
-	setting.AcmeEmail = h.values.AcmeEmail
+	if err := tx.Model(&m.AcmeCloudflareDNSAPIToken{}).Create(&m.AcmeCloudflareDNSAPIToken{
+		SettingID: setting.ID,
+		Name:      h.values.Name,
+		Token:     h.values.Token,
+	}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
 
 	if err := tx.Model(&setting).Save(&setting).Error; err != nil {
 		tx.Rollback()

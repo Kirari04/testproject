@@ -5,7 +5,7 @@ import { onMounted, ref, h } from 'vue'
 import { useToast } from 'vue-toastification';
 import { useStore } from '@/stores/store'
 import ToastDesc from '@/components/ToastDesc.vue'
-import type { Settings } from 'env';
+import type { Settings, SettingsAcmeCf } from 'env';
 
 const loadingBar = useLoadingBar()
 onMounted(async () => {
@@ -23,13 +23,14 @@ onMounted(async () => {
 
 const isLoading = ref(false)
 const acmeEmail = ref("")
+const acmeCloudflareDNSAPITokens = ref<SettingsAcmeCf[]>([])
+const acmeCloudflareDNSAPIName = ref("")
 const acmeCloudflareDNSAPIToken = ref("")
 
 async function saveSettings() {
 	isLoading.value = true
 	await axios.post<string>(`${import.meta.env.VITE_APP_API}/api/settings`, {
 		acme_email: acmeEmail.value,
-		acme_cloudflare_dns_api_token: acmeCloudflareDNSAPIToken.value,
 	})
 		.then(() => {
 			useToast().success('Settings saved')
@@ -53,7 +54,7 @@ async function loadSettings() {
 	await axios.get<Settings>(`${import.meta.env.VITE_APP_API}/api/settings`)
 		.then(res => {
 			acmeEmail.value = res.data.acme_email
-			acmeCloudflareDNSAPIToken.value = res.data.acme_cloudflare_dns_api_token
+			acmeCloudflareDNSAPITokens.value = res.data.acme.cf
 		})
 		.catch(err => {
 			useToast().error(
@@ -66,6 +67,29 @@ async function loadSettings() {
 		})
 	loadingBar.finish()
 	isLoading.value = false
+}
+
+async function addAcmeCloudflareDNSAPIToken() {
+	isLoading.value = true
+	await axios.post<string>(`${import.meta.env.VITE_APP_API}/api/settings/acme/cf`, {
+		name: acmeCloudflareDNSAPIName.value,
+		token: acmeCloudflareDNSAPIToken.value,
+	})
+		.then(() => {
+			useToast().success('Added token')
+			acmeCloudflareDNSAPIName.value = ""
+			acmeCloudflareDNSAPIToken.value = ""
+		})
+		.catch(err => {
+			useToast().error(
+				h(ToastDesc, {
+					title: 'Settings save failed',
+					message: err.response.data ?? err.message,
+				}), {
+				timeout: 5000,
+			})
+		})
+	loadSettings()
 }
 
 </script>
@@ -90,10 +114,20 @@ async function loadSettings() {
 						</n-space>
 					</n-space>
 					<n-space vertical>
-						Cloudflare DNS API Token
+						Cloudflare DNS API Tokens
 						<n-space>
+							<n-input placeholder="Name" type="text" v-model:value="acmeCloudflareDNSAPIName" />
 							<n-input :showPasswordToggle="true" placeholder="xxx" type="password"
 								v-model:value="acmeCloudflareDNSAPIToken" />
+							<n-button type="primary" @click="addAcmeCloudflareDNSAPIToken()">Add</n-button>
+						</n-space>
+						<n-space vertical>
+							<n-card v-for="token in acmeCloudflareDNSAPITokens" :key="token.id">
+								{{ token.name }}
+							</n-card>
+							<n-card v-if="acmeCloudflareDNSAPITokens.length === 0">
+								No Tokens added
+							</n-card>
 						</n-space>
 					</n-space>
 					<n-button :loading="isLoading" type="primary" @click="saveSettings()">Save</n-button>

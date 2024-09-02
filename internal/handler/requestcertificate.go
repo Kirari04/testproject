@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
 	"testproject/internal/m"
 	"testproject/internal/t"
 	"time"
@@ -26,7 +27,9 @@ import (
 type RequestCertificateHandler struct {
 	s      t.Server
 	values struct {
-		Domain string `json:"domain"`
+		Domain   string `json:"domain"`
+		AuthType string `json:"auth_type"`
+		AuthID   uint   `json:"auth_id"`
 	}
 }
 
@@ -43,11 +46,34 @@ func (h *RequestCertificateHandler) Route(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "domain is required")
 	}
 
+	if !slices.Contains(m.AuthTypes, h.values.AuthType) {
+		return c.String(http.StatusBadRequest, "auth_type is invalid")
+	}
+
 	db := h.s.DB()
 
+	// load setting
 	var setting m.Setting
-	if err := db.Model(&m.Setting{}).First(&setting).Error; err != nil {
+	q := db.Model(&m.Setting{})
+	// load tokens if necessary
+	if h.values.AuthType == "cloudflare_dns_api_token" {
+		q.Preload("AcmeCloudflareDNSAPITokens")
+	}
+	if err := q.First(&setting).Error; err != nil {
 		return err
+	}
+	// check if auth id exists
+	var existsAuthId bool
+	var authIdIndex int
+	for i, token := range setting.AcmeCloudflareDNSAPITokens {
+		if token.ID == h.values.AuthID {
+			existsAuthId = true
+			authIdIndex = i
+			break
+		}
+	}
+	if !existsAuthId {
+		return c.String(http.StatusBadRequest, "auth_id is invalid")
 	}
 
 	certDir := h.s.ENV().WorkDir + "/certs"
@@ -70,74 +96,76 @@ func (h *RequestCertificateHandler) Route(c echo.Context) error {
 		return fmt.Errorf("failed to generate private key: %v", err)
 	}
 
-	myUser := t.NewAcmeUser(setting.AcmeEmail, privateKey)
+	if h.values.AuthType == "cloudflare_dns_api_token" {
+		myUser := t.NewAcmeUser(setting.AcmeEmail, privateKey)
 
-	config := lego.NewConfig(myUser)
-	config.Certificate.KeyType = certcrypto.RSA2048
+		config := lego.NewConfig(myUser)
+		config.Certificate.KeyType = certcrypto.RSA2048
 
-	client, err := lego.NewClient(config)
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to create lego client: %v", err)
-	}
+		client, err := lego.NewClient(config)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to create lego client: %v", err)
+		}
 
-	cfconfig := &cloudflare.Config{
-		TTL:                120,
-		PropagationTimeout: 2 * time.Minute,
-		PollingInterval:    2 * time.Second,
-		HTTPClient: &http.Client{
-			Timeout: 30 * time.Second,
-		},
-	}
-	cfconfig.AuthToken = setting.AcmeCloudflareDNSAPIToken
+		cfconfig := &cloudflare.Config{
+			TTL:                120,
+			PropagationTimeout: 2 * time.Minute,
+			PollingInterval:    2 * time.Second,
+			HTTPClient: &http.Client{
+				Timeout: 30 * time.Second,
+			},
+		}
+		cfconfig.AuthToken = setting.AcmeCloudflareDNSAPITokens[authIdIndex].Token
 
-	provider, err := cloudflare.NewDNSProviderConfig(cfconfig)
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to create cloudflare dns provider: %v", err)
-	}
+		provider, err := cloudflare.NewDNSProviderConfig(cfconfig)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to create cloudflare dns provider: %v", err)
+		}
 
-	err = client.Challenge.SetDNS01Provider(provider)
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to set dns01 provider: %v", err)
-	}
+		err = client.Challenge.SetDNS01Provider(provider)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to set dns01 provider: %v", err)
+		}
 
-	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to register: %v", err)
-	}
-	myUser.Registration = reg
+		reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to register: %v", err)
+		}
+		myUser.Registration = reg
 
-	request := certificate.ObtainRequest{
-		Domains: []string{h.values.Domain},
-		Bundle:  true,
-	}
-	certificates, err := client.Certificate.Obtain(request)
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to obtain certificate: %v", err)
-	}
+		request := certificate.ObtainRequest{
+			Domains: []string{h.values.Domain},
+			Bundle:  true,
+		}
+		certificates, err := client.Certificate.Obtain(request)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to obtain certificate: %v", err)
+		}
 
-	// Destination
-	dst, err := os.Create(pemPath)
-	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to create destination file: %v", err)
-	}
-	defer dst.Close()
+		// Destination
+		dst, err := os.Create(pemPath)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to create destination file: %v", err)
+		}
+		defer dst.Close()
 
-	src := bytes.NewReader(certificates.Certificate)
-	if _, err = io.Copy(dst, src); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to copy certificate file: %v", err)
-	}
+		src := bytes.NewReader(certificates.Certificate)
+		if _, err = io.Copy(dst, src); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to copy certificate file: %v", err)
+		}
 
-	src2 := bytes.NewReader(certificates.PrivateKey)
-	if _, err = io.Copy(dst, src2); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to copy key file: %v", err)
+		src2 := bytes.NewReader(certificates.PrivateKey)
+		if _, err = io.Copy(dst, src2); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to copy key file: %v", err)
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {

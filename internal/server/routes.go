@@ -28,6 +28,7 @@ func (s *Server) Routes() error {
 
 	s.e.GET("/api/settings", handler.NewGetSettingsHandler(s).Route)
 	s.e.POST("/api/settings", handler.NewSetSettingsHandler(s).Route)
+	s.e.POST("/api/settings/acme/cf", handler.NewCreateAcmeCf(s).Route)
 
 	s.e.GET("/api/certificates", handler.NewGetCertificatesHandler(s).Route)
 	s.e.POST("/api/certificate", handler.NewAddCertificateHandler(s).Route)

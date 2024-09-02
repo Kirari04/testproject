@@ -5,6 +5,9 @@ build:
 run:
 	@go build -o main ./main.go && ./main serve
 
+dev:
+	@air serve
+
 build-docker:
 	@docker build -t $(dockertag) . --load
 
