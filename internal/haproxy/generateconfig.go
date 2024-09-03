@@ -114,33 +114,30 @@ func (h *Haproxy) GenerateConfig(reload bool) error {
 			frontendCfg += "\n  capture request header Referer len 256"
 			frontendCfg += "\n  capture response header Content-Length len 10"
 
-			// block other common attacks
-			frontendCfg += "\n  acl forbidden_all path_dir changelog.txt .git .svn .hg .bzr node_modules logs settings.py database.yml dist build web.config"
-			frontendCfg += "\n  acl forbidden_all path_dir .env .env.local .env.production .env.test"
-			frontendCfg += "\n  acl forbidden_all path_dir secret private keys .ssh .htpasswd id_rsa id_dsa key.pem server.key server.pem"
-			frontendCfg += "\n  acl forbidden_all path_dir .htaccess .php_cs.cache test.php i.php info.php phpinfo.php adminer.php config.php composer.json composer.lock vb_test.php lfm.php"
-			// frontendCfg += "\n  acl forbidden_all path_dir "
-			frontendCfg += "\n  acl forbidden_all url_reg -i \\.(bak|backup|tmp|temp|swp|DS_Store|log|zip|tar|tar\\.gz|tgz|exe|dll|so|dylib)$"
-			frontendCfg += "\n  acl forbidden_all url_reg -i .*(\\.|%2e)(\\.|%2e)(%2f|%5c|/|\\\\\\\\)"
-			frontendCfg += "\n  acl forbidden_all url_sub allow_url_include auto_prepend_file php://input"
-			// frontendCfg += "\n  acl forbidden_all url_reg -i "
+			// // block other common attacks
+			// frontendCfg += "\n  acl forbidden_all path_dir changelog.txt .git .svn .hg .bzr node_modules logs settings.py database.yml dist build web.config"
+			// frontendCfg += "\n  acl forbidden_all path_dir .env .env.local .env.production .env.test"
+			// frontendCfg += "\n  acl forbidden_all path_dir secret private keys .ssh .htpasswd id_rsa id_dsa key.pem server.key server.pem"
+			// frontendCfg += "\n  acl forbidden_all path_dir .htaccess .php_cs.cache test.php i.php info.php phpinfo.php adminer.php config.php composer.json composer.lock vb_test.php lfm.php"
+			// // frontendCfg += "\n  acl forbidden_all path_dir "
+			// frontendCfg += "\n  acl forbidden_all url_reg -i \\.(bak|backup|tmp|temp|swp|DS_Store|log|zip|tar|tar\\.gz|tgz|exe|dll|so|dylib)$"
+			// frontendCfg += "\n  acl forbidden_all url_reg -i .*(\\.|%2e)(\\.|%2e)(%2f|%5c|/|\\\\\\\\)"
+			// frontendCfg += "\n  acl forbidden_all url_sub allow_url_include auto_prepend_file php://input"
+			// // frontendCfg += "\n  acl forbidden_all url_reg -i "
 
-			// Block requests with forbidden HTTP methods
-			frontendCfg += "\n  acl forbidden_all method TRACE TRACK"
-			// Block User-Agents known for malicious activities (example: some automated tools or outdated browsers)
-			frontendCfg += "\n  acl forbidden_agents hdr_sub(User-Agent) -i sqlmap nikto w3af acunetix netsparker zgrab jbrofuzz sqlninja sqlpowerinjector sqlsus yersinia commix andsql rips xsser openvas skipfish grabber appscan netspider gobuster"
-			// block apache chunk exploit, ...
-			frontendCfg += "\n  acl forbidden_all hdr_sub(transfer-encoding) -i chunked"
-			frontendCfg += "\n  acl forbidden_all hdr_beg(host) -i apache- localhost"
-			// Check if the 'host' header appears more than once in the request
-			frontendCfg += "\n  acl forbidden_all hdr_cnt(host) gt 1"
-			// Check if the 'content-length' header appears more than once in the request
-			frontendCfg += "\n  acl forbidden_all hdr_cnt(content-length) gt 1"
-			// Check if the 'content-length' header value is less than 0
-			frontendCfg += "\n  acl forbidden_all hdr_val(content-length) lt 0"
+			// // Block requests with forbidden HTTP methods
+			// frontendCfg += "\n  acl forbidden_all method TRACE TRACK"
+			// // Block User-Agents known for malicious activities (example: some automated tools or outdated browsers)
+			// frontendCfg += "\n  acl forbidden_agents hdr_sub(User-Agent) -i sqlmap nikto w3af acunetix netsparker zgrab jbrofuzz sqlninja sqlpowerinjector sqlsus yersinia commix andsql rips xsser openvas skipfish grabber appscan netspider gobuster"
+			// // Check if the 'host' header appears more than once in the request
+			// frontendCfg += "\n  acl forbidden_all hdr_cnt(host) gt 1"
+			// // Check if the 'content-length' header appears more than once in the request
+			// frontendCfg += "\n  acl forbidden_all hdr_cnt(content-length) gt 1"
+			// // Check if the 'content-length' header value is less than 0
+			// frontendCfg += "\n  acl forbidden_all hdr_val(content-length) lt 0"
 
 			// Block all forbidden requests
-			frontendCfg += "\n  http-request deny deny_status 403 if forbidden_all"
+			// frontendCfg += "\n  http-request deny deny_status 403 if forbidden_all"
 
 			// match bandwith limits with acls
 			if frontend.DefBwInLimit > 0 {
