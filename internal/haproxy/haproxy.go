@@ -2,6 +2,7 @@ package haproxy
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -15,13 +16,27 @@ import (
 )
 
 type Haproxy struct {
-	i                HaproxyInternal
-	s                t.Server
-	stopChan         chan bool
-	onStopChan       chan bool
-	keepAliveEnabled bool
-	stdOut           io.Writer
-	stdErr           io.Writer
+	i          HaproxyInternal
+	s          t.Server
+	stopChan   chan bool
+	onStopChan chan bool
+	stdOut     io.Writer
+	stdErr     io.Writer
+
+	crashReasons   HaproxyCrashReasons
+	keepaliveState HaproxyKeepaliveState
+}
+
+type HaproxyCrashReasons struct {
+	sync.Mutex
+
+	HasCrashed bool
+
+	AddressInUse    bool
+	AddressInUseLog string
+
+	PermissionDeniedPort    bool
+	PermissionDeniedPortLog string
 }
 
 type HaproxyInternal struct {
@@ -54,7 +69,10 @@ func (h *Haproxy) Start() error {
 		return err
 	}
 	// force update state
-	h.RunKeepAlive()
+	if crashed := h.WaitforIsRunningState(); crashed != nil {
+		return errors.New("failed to start haproxy, check crash report for more informations")
+	}
+	h.StartKeepAlive()
 	return nil
 }
 
@@ -63,7 +81,11 @@ func (h *Haproxy) Reload() error {
 		return err
 	}
 	// force update state
-	h.RunKeepAlive()
+
+	if crashed := h.WaitforIsRunningState(); crashed != nil {
+		return errors.New("failed to reload haproxy, check crash report for more informations")
+	}
+	h.StartKeepAlive()
 	return nil
 }
 
@@ -83,16 +105,37 @@ func (h *Haproxy) Stop() error {
 		return fmt.Errorf("timeout while waiting for haproxy to stop")
 	}
 
-	// force update state
-	h.RunKeepAlive()
+	h.StopKeepAlive()
+
+	// update state
+	isRunning := h.IsRunningCheck()
+	h.i.Lock()
+	h.i.isRunning = isRunning
+	h.i.Unlock()
 
 	return nil
 }
 
+// this function is used to check if haproxy is running or not (based on the internal state)
 func (h *Haproxy) IsRunning() bool {
 	h.i.Lock()
 	defer h.i.Unlock()
 	return h.i.isRunning
+}
+
+// this function is used to check if haproxy is running or not (based on the cli process)
+func (h *Haproxy) IsRunningCheck() bool {
+	h.i.Lock()
+	defer h.i.Unlock()
+	var isRunning bool
+	if h.i.Cmd == nil || h.i.Cmd.Process == nil || h.i.Cmd.Process.Pid < 1 || h.i.Cmd.ProcessState != nil {
+		// log.Debug().Msg("keepalive: haproxy is not running")
+		isRunning = false
+	} else {
+		// log.Debug().Int("pid", h.i.Cmd.Process.Pid).Msg("keepalive: haproxy is running")
+		isRunning = true
+	}
+	return isRunning
 }
 
 func (h *Haproxy) ConfigPath() string {

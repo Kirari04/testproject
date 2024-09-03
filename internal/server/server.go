@@ -76,7 +76,7 @@ func NewServer() (*Server, error) {
 }
 
 func (s *Server) Start(tls bool) error {
-	go s.HaKeepAlive()
+	s.HaStartKeepAlive()
 
 	if tls {
 		// generate self-signed certs if not exists

@@ -11,7 +11,9 @@ export const useStore = defineStore('store', () => {
     isProxyRunning.value = v
   }
   async function checkIsProxyRunning() {
-    await axios.get<string>(`${import.meta.env.VITE_APP_API}/api/status`)
+    await axios.get<string>(`${import.meta.env.VITE_APP_API}/api/status`, {
+      timeout: 1000 * 5,
+    })
       .then(res => {
         isProxyRunning.value = (res.data === 'ok')
       })

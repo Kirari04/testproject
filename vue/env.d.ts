@@ -109,3 +109,11 @@ export interface SettingsAcmeCf {
   name: string
   token: string
 }
+
+export interface HaproxyCrashReasonsData {
+  has_crashed: boolean
+  address_in_use: boolean
+  address_in_use_log: string
+  permission_denied_port: boolean
+  permission_denied_port_log: string
+}

@@ -16,7 +16,18 @@ type Server interface {
 	HaGenerateConfig(reload bool) error
 	HaCheckConfig() error
 	HaGetStats() (*[]ProxyStatus, error)
-	HaKeepAlive()
+	HaStartKeepAlive()
 	HaStopKeepAlive()
 	HaConfigPath() string
+	HaGetCrashReasons() HaproxyCrashReasonsData
+}
+
+type HaproxyCrashReasonsData struct {
+	HasCrashed bool `json:"has_crashed"`
+
+	AddressInUse    bool   `json:"address_in_use"`
+	AddressInUseLog string `json:"address_in_use_log"`
+
+	PermissionDeniedPort    bool   `json:"permission_denied_port"`
+	PermissionDeniedPortLog string `json:"permission_denied_port_log"`
 }

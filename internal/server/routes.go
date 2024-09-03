@@ -23,6 +23,7 @@ func (s *Server) Routes() error {
 	s.e.PUT("/api/proxy", handler.NewUpdateProxyHandler(s).Route)
 	s.e.DELETE("/api/proxy", handler.NewDeleteProxyHandler(s).Route)
 	s.e.GET("/api/proxies/status", handler.NewGetProxiesStatusHandler(s).Route)
+	s.e.GET("/api/proxy/crash", handler.NewGetCrashHandler(s).Route)
 
 	s.e.GET("/api/haproxy/logs", handler.NewGetHaproxyLogsHandler(s).Route)
 

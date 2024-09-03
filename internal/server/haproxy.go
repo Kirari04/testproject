@@ -20,8 +20,8 @@ func (s *Server) HaIsRunning() bool {
 	return s.Haproxy.IsRunning()
 }
 
-func (s *Server) HaKeepAlive() {
-	s.Haproxy.KeepAlive()
+func (s *Server) HaStartKeepAlive() {
+	s.Haproxy.StartKeepAlive()
 }
 
 func (s *Server) HaGenerateConfig(reload bool) error {
@@ -42,4 +42,8 @@ func (s *Server) HaStopKeepAlive() {
 
 func (s *Server) HaConfigPath() string {
 	return s.Haproxy.ConfigPath()
+}
+
+func (s *Server) HaGetCrashReasons() t.HaproxyCrashReasonsData {
+	return s.Haproxy.GetCrashReasons()
 }

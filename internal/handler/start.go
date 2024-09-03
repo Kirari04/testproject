@@ -22,7 +22,7 @@ func (h *StartHandler) Route(c echo.Context) error {
 	}
 	if err := h.s.HaStart(); err != nil {
 		log.Error().Err(err).Msg("failed to start proxy")
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to start proxy")
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to start proxy, check crash report for more informations")
 	}
 	return c.String(http.StatusOK, "ok")
 }
