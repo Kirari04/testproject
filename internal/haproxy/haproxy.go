@@ -99,21 +99,19 @@ func (h *Haproxy) ConfigPath() string {
 	return h.s.ENV().WorkDir + "/haproxy/haproxy.cfg"
 }
 
-// the locking should be done by the caller
+// the locking & unlocking should be done by the caller
 func (h *Haproxy) shouldBeRunning(should bool) error {
 	tx := h.s.DB()
 	var setting m.Setting
 	if err := tx.First(&setting).Error; err != nil {
 		log.Error().Err(err).Msg("failed to get setting inside start")
 		tx.Rollback()
-		h.i.Unlock()
 		return err
 	}
 	setting.ShouldProxyRun = should
 	if err := tx.Save(&setting).Error; err != nil {
 		log.Error().Err(err).Msg("failed to update setting inside start")
 		tx.Rollback()
-		h.i.Unlock()
 		return err
 	}
 	return nil
