@@ -107,29 +107,40 @@ async function addAcmeCloudflareDNSAPIToken() {
 			<h3>Acme (Certificate Requests)</h3>
 			<form autocomplete="off" data-lpignore="true">
 				<n-space size="large" vertical>
-					<n-space vertical>
-						E-Mail
-						<n-space>
-							<n-input placeholder="example@example.com" v-model:value="acmeEmail" />
-						</n-space>
-					</n-space>
-					<n-space vertical>
-						Cloudflare DNS API Tokens
-						<n-space>
-							<n-input placeholder="Name" type="text" v-model:value="acmeCloudflareDNSAPIName" />
-							<n-input :showPasswordToggle="true" placeholder="xxx" type="password"
-								v-model:value="acmeCloudflareDNSAPIToken" />
-							<n-button type="primary" @click="addAcmeCloudflareDNSAPIToken()">Add</n-button>
-						</n-space>
+					<n-card title="ACME E-Mail">
 						<n-space vertical>
-							<n-card v-for="token in acmeCloudflareDNSAPITokens" :key="token.id">
-								{{ token.name }}
-							</n-card>
-							<n-card v-if="acmeCloudflareDNSAPITokens.length === 0">
-								No Tokens added
-							</n-card>
+							<n-space>
+								<n-input placeholder="example@example.com" v-model:value="acmeEmail" />
+							</n-space>
 						</n-space>
-					</n-space>
+					</n-card>
+					<n-card title="Cloudflare DNS API Authentication">
+						<n-space vertical>
+							<strong>Add Credential</strong>
+							<n-space>
+								<n-input placeholder="Name" type="text" v-model:value="acmeCloudflareDNSAPIName" />
+								<n-input :showPasswordToggle="true" placeholder="xxx" type="password"
+									v-model:value="acmeCloudflareDNSAPIToken" />
+								<n-button type="primary" @click="addAcmeCloudflareDNSAPIToken()">Add</n-button>
+							</n-space>
+							<strong>Credentials</strong>
+							<n-space vertical>
+								<n-card v-for="token in acmeCloudflareDNSAPITokens" :key="token.id" size="small">
+									<strong>{{ token.name }}</strong>
+									<n-flex align="center" gap="small">
+										<n-input :showPasswordToggle="true" placeholder="xxx" type="password"
+											:value="token.token" style="width: 100px; flex-grow: 1;" />
+										<n-button style="margin-left: auto;" type="error">
+											Remove
+										</n-button>
+									</n-flex>
+								</n-card>
+								<n-card v-if="acmeCloudflareDNSAPITokens.length === 0" size="small">
+									No Tokens added
+								</n-card>
+							</n-space>
+						</n-space>
+					</n-card>
 					<n-button :loading="isLoading" type="primary" @click="saveSettings()">Save</n-button>
 				</n-space>
 			</form>
