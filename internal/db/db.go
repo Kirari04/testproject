@@ -2,11 +2,13 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"testproject/internal/env"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -1064,6 +1066,52 @@ func Connect(cfg *env.Env) (*gorm.DB, error) {
 			Rollback: func(tx *gorm.DB) error {
 
 				return errors.New("not implemented")
+			},
+		},
+		{
+			ID: "18",
+			Migrate: func(tx *gorm.DB) error {
+				type User struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Username string `gorm:"column:username" json:"username"`
+					Password string `gorm:"column:password" json:"-"`
+				}
+
+				if err := tx.Migrator().AutoMigrate(&User{}); err != nil {
+					return err
+				}
+
+				hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+				if err != nil {
+					return fmt.Errorf("failed to hash password: %w", err)
+				}
+
+				if err := tx.Create(&User{
+					Username: "admin",
+					Password: string(hashedPassword),
+				}).Error; err != nil {
+					return fmt.Errorf("failed to create user: %w", err)
+				}
+
+				return nil
+			},
+			Rollback: func(tx *gorm.DB) error {
+				type User struct {
+					ID        uint      `gorm:"primaryKey;column:id" json:"id"`
+					CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+					UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+
+					Username string `gorm:"column:username" json:"username"`
+					Password string `gorm:"column:password" json:"-"`
+				}
+
+				if err := tx.Migrator().DropTable(&User{}); err != nil {
+					return err
+				}
+				return nil
 			},
 		},
 	})
